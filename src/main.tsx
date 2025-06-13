@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import Interface from "./pages/Interface";
 import HomePage from "./pages/HomePage";
-
+import Banner from "./components/ui/Banner";
+import Footer from "./components/ui/Footetr";
 
 interface AppState {
   isLoginned: boolean;
@@ -24,13 +24,11 @@ class App extends React.Component<{}, AppState> {
   render() {
     return (
       <div className="app">
-        {
-          this.state.isLoginned ? (
-            <HomePage />
-          ) : (
-            <Interface toLogin={() => this.login()} />
-          )
-        }
+        <>
+          <Banner />
+          <HomePage />
+          <Footer />
+        </>
       </div>
     )
   }

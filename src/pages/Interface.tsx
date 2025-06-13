@@ -1,6 +1,6 @@
 import React from "react";
 import InterfaceCard from '../components/interface/card';
-import Banner from "../components/ui/Banner";
+// import Banner from "../components/ui/Banner";
 
 import '../assets/css/interface.less';
 
@@ -15,7 +15,6 @@ class Interface extends React.Component<InterfaceProps> {
   render() {
     return (
       <div className="interface">
-        <Banner />
         <InterfaceCard enterKey={() => this.props.toLogin()} />
       </div>
     );
