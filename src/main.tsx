@@ -15,12 +15,6 @@ class App extends React.Component<{}, AppState> {
       isLoginned: false,
     };
   }
-  private login = () => {
-    this.setState({
-      isLoginned: true,
-    });
-    console.log(this.state.isLoginned);
-  }
   render() {
     return (
       <div className="app">

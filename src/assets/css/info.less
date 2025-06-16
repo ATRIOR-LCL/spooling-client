@@ -1,0 +1,45 @@
+.info {
+  height: 70%;
+  aspect-ratio: 1/1;
+  border-radius: 5px;
+  background-color: var(--shift-color);
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  &-svg {
+    &:hover + .info-tip {
+      opacity: 1;
+    }
+  }
+  &-tip {
+    width: 300%;
+    height: 150%;
+    position: absolute;
+    background-color: var(--icpc-yellow);
+    top: 150%;
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    border-radius: 5px;
+    padding: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    &-text {
+      font-size: 15px;
+      font-family: "robot-solid";
+      color: #fff;
+    }
+    &::after {
+      content: "";
+      position: absolute;
+      width: 10%;
+      aspect-ratio: 1;
+      clip-path: polygon(50% 0, 100% 100%, 0 100%);
+      background-color: var(--icpc-yellow);
+      transform: translateY(-150%);
+    }
+  }
+}

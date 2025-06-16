@@ -13,16 +13,23 @@ export default class ThemeButton extends React.Component<any, ThemeButtonState> 
         }
     }
     componentDidMount(): void {
-        this.toogleTheme();
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === "dark") {
+            document.body.classList.add("dark-theme");
+            this.setState({ theme: "dark" });
+        } else {
+            document.body.classList.remove("dark-theme");
+            this.setState({ theme: "light" });
+        }
     }
     private toogleTheme = () => {
         const body = document.body;
         body.classList.toggle("dark-theme");
-        const isDark:boolean = body.classList.contains("dark-theme");
-        if(isDark) {
+        const isDark: boolean = body.classList.contains("dark-theme");
+        if (isDark) {
             localStorage.setItem("theme", isDark ? "dark" : "light");
             this.setState({ theme: "dark" });
-        }else {
+        } else {
             localStorage.setItem("theme", isDark ? "dark" : "light");
             this.setState({ theme: "light" });
         }
@@ -33,7 +40,6 @@ export default class ThemeButton extends React.Component<any, ThemeButtonState> 
             <div className={`theme-button theme-${this.state.theme}`} onClick={this.toogleTheme}>
                 <svg
                     viewBox="0 0 100 100"
-                    fill="none"
                     xmlns="http://www.w3.org/2000/svg"
                     className="relative sun-moon-svg"
                 >

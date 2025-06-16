@@ -1,0 +1,36 @@
+.code {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  z-index: 6;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &-face {
+    width: 45%;
+    height: 70%;
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    overflow-y: auto;
+    overflow-x: auto;
+    border-radius: 10px;
+    &::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--text-color);
+      border-radius: 4px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+  }
+}

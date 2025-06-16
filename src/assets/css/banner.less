@@ -23,6 +23,27 @@
     user-select: none;
     color: var(--text-color);
   }
+
+  &-info {
+    z-index: -2;
+    display: flex;
+    position: absolute;
+    width: 10%;
+    aspect-ratio: 1/2;
+    background-color: red;
+    top: 40%;
+    right: 5%;
+  }
+
+  &-right {
+    height: 100%;
+    display: flex;
+    flex-basis: 10%;
+    // background-color: red;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+  }
 }
 
 .logo {
