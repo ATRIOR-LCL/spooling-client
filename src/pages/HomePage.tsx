@@ -1,7 +1,7 @@
 import React from "react";
 import '../assets/css/home.less';
 import PrinterCard from "../components/home/PrinterCard";
-
+import Run from "../components/home/Run";
 
 class HomePage extends React.Component {
     render() {
@@ -11,7 +11,9 @@ class HomePage extends React.Component {
                     <section className="home-main-section">
                         <PrinterCard />
                     </section>
-                    <section className="home-main-section"></section>
+                    <section className="home-main-section">
+                        <Run />
+                    </section>
                 </main>
             </div>
         )
