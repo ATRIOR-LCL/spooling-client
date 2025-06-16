@@ -134,7 +134,7 @@ class OverItemds extends React.Component {
                                                 })
                                             ) : (
                                                 <div className="run-task-items-content-empty">
-                                                    <p>There are currently no completed print tasks 😶</p>
+                                                    <p>Please select code files and start printing ☺️</p>
                                                 </div>
                                             )
                                         }
