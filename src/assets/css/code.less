@@ -8,6 +8,45 @@
   justify-content: center;
   align-items: center;
 
+  &-preview {
+    position: absolute;
+    top: 2%;
+    width: 15%;
+    aspect-ratio: 3/1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    color: #fff;
+    font-family: "robot-solid";
+  }
+
+  &-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 2%;
+    aspect-ratio: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    transform: translate(-50%, 50%);
+    cursor: pointer;
+  }
+
+  &-download {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 2%;
+    aspect-ratio: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    transform: translate(-200%, 50%);
+    cursor: pointer;
+  }
+
   &-face {
     width: 45%;
     height: 70%;

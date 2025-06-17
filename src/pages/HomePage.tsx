@@ -26,7 +26,7 @@ class ErrorBoundary extends React.Component {
 }
 
 interface HomePageState {
-    tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string }> | null;
+    tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, index: number }> | null;
     currentCode: string | null;
 }
 
@@ -34,7 +34,7 @@ interface TaskContextType {
     tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string }> | null;
     increaseTasks: (printerId: number, fileName: string, date: string, fileContent: string) => void;
     decreaseTasks: (printerId: number) => void;
-    showCode: (fileContent: string) => void;    
+    showCode: (fileContent: string) => void;
 }
 export const taskContext = React.createContext<TaskContextType>({
     tasks: null,
@@ -53,13 +53,13 @@ class HomePage extends React.Component<any, HomePageState> {
     }
     private increaseTasks = (printerId: number, fileName: string, date: string, fileContent: string): void => {
         this.setState((prevState) => ({
-            tasks: prevState.tasks === null ? ([{ printerId, fileName, date, fileContent }]) : ([...prevState.tasks, { printerId, fileName, date, fileContent }])
+            tasks: prevState.tasks === null ? ([{ printerId, fileName, date, fileContent, index: 0 }]) : ([...prevState.tasks, { printerId, fileName, date, fileContent, index: prevState.tasks.length }])
         }));
     }
 
-    private decreaseTasks = (printerId: number): void => {
+    private decreaseTasks = (index: number): void => {
         this.setState((prevState) => ({
-            tasks: (prevState.tasks || []).filter(task => task.printerId !== printerId)
+            tasks: (prevState.tasks || []).filter(task => task.index !== index)
         }));
     }
 
@@ -86,7 +86,7 @@ class HomePage extends React.Component<any, HomePageState> {
             }>
                 <div className="home">
                     {
-                        this.state.currentCode ? <Code code={this.state.currentCode} /> : null
+                        this.state.currentCode ? <Code code={this.state.currentCode} closeCode={this.closeCode} /> : null
                     }
                     <main className="home-main">
                         <section className="home-main-section">
