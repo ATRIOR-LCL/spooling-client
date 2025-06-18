@@ -173,7 +173,7 @@ class OverItemds extends React.Component<any, { animate: boolean }> {
         };
 
     }
-    
+
     componentDidMount(): void {
         setTimeout(() => {
             this.setState({
@@ -187,15 +187,27 @@ class OverItemds extends React.Component<any, { animate: boolean }> {
             <taskContext.Consumer>
                 {
                     value => {
+                        let disabled = true;
+                        if (value.successTasks && value.successTasks.length > 0) {
+                            disabled = false;
+                        }
                         return (
                             <div className="run-task">
                                 <header className="run-task-header">All completed tasks</header>
                                 <div className="run-task-items">
+                                    <div className="run-task-buttons">
+                                        <button onClick={value.clearOverallTasks} disabled={disabled} className="run-task-buttons-clear">
+                                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--text-color)"><path d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z" /></svg>
+                                        </button>
+                                        <button className="run-task-buttons-download" disabled={disabled}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--text-color)"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" /></svg>
+                                        </button>
+                                    </div>
                                     <div className="run-task-items-content">
                                         {
                                             value.successTasks && value.successTasks.length > 0 ? (
                                                 value.successTasks.map((item, index) => {
-                                                    return <OverCard animate={this.state.animate} transitionDelay={index} showCode={() => value.showCode(item.fileContent, item.teamName)} key={index} fileName={item.fileName} date={item.date} fileContent={item.fileContent} />
+                                                    return <OverCard animate={this.state.animate} transitionDelay={index} showCode={() => value.showCode(item.fileContent, item.teamName, item.printerId === 3 ? true : false)} key={index} fileName={item.fileName} date={item.date} fileContent={item.fileContent} />
                                                 })
                                             ) : (
                                                 <div className="run-task-items-content-empty">

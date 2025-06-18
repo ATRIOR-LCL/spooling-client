@@ -28,7 +28,10 @@ class ErrorBoundary extends React.Component {
 interface HomePageState {
     tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, index: number, teamName: string }> | null;
     workingPrinters: Array<number> | null;
-    currentCode: string | null;
+    currentCode: {
+        content: string | null;
+        color: boolean;
+    }
     currentTeamName: string;
     successTasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string }> | null;
     faildTasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string }> | null;
@@ -48,7 +51,7 @@ interface TaskContextType {
     workingPrinters: Array<number> | null;
     increaseTasks: (printerId: number, fileName: string, date: string, fileContent: string, teamName: string) => void;
     decreaseTasks: (printerId: number) => void;
-    showCode: (fileContent: string, teamName: string) => void;
+    showCode: (fileContent: string, teamName: string, color: boolean) => void;
     clearPendingTasks: () => void;
     setSuccessTasks: (arr: Array<SuccessTaskType>) => void;
     setFaildTasks: (printerId: number, fileName: string, date: string, fileContent: string, teamName: string) => void;
@@ -56,6 +59,7 @@ interface TaskContextType {
     getFaildTasksNumber: (printerId: number) => number;
     setWorkingPrinters: (workingPrinters: Array<number>) => void;
     clearWorkingPrinters: () => void;
+    clearOverallTasks: () => void;
 }
 export const taskContext = React.createContext<TaskContextType>({
     tasks: null,
@@ -70,7 +74,8 @@ export const taskContext = React.createContext<TaskContextType>({
     getSuccessTasksNumber: () => 0,
     getFaildTasksNumber: () => 0,
     setWorkingPrinters: () => { },
-    clearWorkingPrinters: () => { }
+    clearWorkingPrinters: () => { },
+    clearOverallTasks: () => { }
 });
 
 /**
@@ -118,7 +123,10 @@ class HomePage extends React.Component<any, HomePageState> {
         super(props);
         this.state = {
             tasks: null,
-            currentCode: null,
+            currentCode: {
+                content: null,
+                color: false
+            },
             workingPrinters: null,
             currentTeamName: '未命名队伍',
             successTasks: null,
@@ -139,22 +147,42 @@ class HomePage extends React.Component<any, HomePageState> {
         }));
     }
 
-    private showCode = (fileContent: string, teamName: string): void => {
+    private showCode = (fileContent: string, teamName: string, color: boolean): void => {
         this.setState({
-            currentCode: fileContent,
+            currentCode: {
+                content: fileContent,
+                color: color
+            },
             currentTeamName: teamName
         });
     }
 
     private closeCode = (): void => {
         this.setState({
-            currentCode: null
+            currentCode: {
+                content: null,
+                color: false
+            }
         });
     }
 
     private clearPendingTasks = (): void => {
         this.setState({
             tasks: null
+        });
+    }
+
+    private clearOverallTasks = (): void => {
+        this.setState({
+            tasks: null,
+            successTasks: null,
+            faildTasks: null,
+            workingPrinters: null,
+            currentCode: {
+                content: null,
+                color: false
+            },
+            currentTeamName: '未命名队伍'
         });
     }
 
@@ -209,12 +237,15 @@ class HomePage extends React.Component<any, HomePageState> {
                     getSuccessTasksNumber: this.getSuccessTasksNumber,
                     getFaildTasksNumber: this.getFaildTasksNumber,
                     setWorkingPrinters: this.setWorkingPrinters,
-                    clearWorkingPrinters: this.clearWorkingPrinters
+                    clearWorkingPrinters: this.clearWorkingPrinters,
+                    clearOverallTasks: this.clearOverallTasks
                 }
             }>
                 <div className="home">
                     {
-                        this.state.currentCode ? <Code code={this.state.currentCode} teamName={this.state.currentTeamName} closeCode={this.closeCode} /> : null
+                        this.state.currentCode.content
+                        ?<Code code={this.state.currentCode.content} color={this.state.currentCode.color} teamName={this.state.currentTeamName} closeCode={this.closeCode} /> 
+                        : null
                     }
                     <main className="home-main">
                         <section className="home-main-section">
