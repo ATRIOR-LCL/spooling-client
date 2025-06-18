@@ -57,12 +57,11 @@
   }
 
   &-card {
-    width: 80%;
+    width: 90%;
     height: 50px;
     position: relative;
     user-select: none;
     margin: 20px auto;
-    transition: transform 0.3s ease-in-out, opacity 0.2s ease;
     &-content {
       position: absolute;
       inset: 0 20px;
@@ -132,4 +131,21 @@
       }
     }
   }
+}
+
+.pending {
+  transition: transform 0.3s ease-in-out, opacity 0.2s ease;
+  transform: translateX(0);
+}
+
+.over {
+  transition: transform 0.3s ease-in-out, opacity 0.2s ease;
+  transform: translateX(-150%);
+  opacity: 0;
+}
+
+.over-animate {
+  transition: transform 0.3s ease-in-out, opacity 0.2s ease;
+  transform: translateX(0%);
+  opacity: 1;
 }

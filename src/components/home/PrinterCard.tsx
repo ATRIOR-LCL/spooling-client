@@ -1,6 +1,7 @@
-import React, { type MouseEventHandler } from "react";
+import React from "react";
 import '../../assets/css/printer.less'
 import { taskContext } from "../../pages/HomePage";
+import { sleep } from "../../utils/sleep";
 
 interface PrinterCardState {
     printerName: string;
@@ -8,14 +9,17 @@ interface PrinterCardState {
     printerSerialNumber: number;
     printerStatus: string;
     color: boolean;
+    teamName: string;
 }
 interface PrinterItemsProps {
     name: string;
     seriesalNumber: number;
+    setTeamName: (name: string) => void;
 }
 
 interface PrinterHandleProps {
     printerId: number;
+    teamName: string;
     changeNumber: (id: number) => void;
 }
 
@@ -31,12 +35,25 @@ interface PrinterDetalsProps {
 }
 
 
-
 class OperationItems extends React.Component<PrinterItemsProps> {
+    private inputRef = React.createRef<HTMLInputElement>();
     constructor(props: PrinterItemsProps) {
         super(props);
         this.state = {};
     }
+
+    private handleInputBlur = () => {
+        const inputElement = this.inputRef.current;
+        if (inputElement) {
+            const teamName = inputElement.value.trim();
+            if (teamName) {
+                this.props.setTeamName(teamName);
+            } else {
+                this.props.setTeamName("未命名队伍");
+            }
+        }
+    }
+
     render(): React.ReactNode {
         return (
             <div className="pt-operation-items">
@@ -49,7 +66,8 @@ class OperationItems extends React.Component<PrinterItemsProps> {
                         <main className="pt-operation-item-content-body">
                             <p>Serial Number：**** **** {this.props.seriesalNumber}</p>
                             <aside className="pt-operation-item-content-body-aside">
-                                <p>East A Zone</p>
+                                <p>East A Zone：</p>
+                                <input type="text" placeholder="请输入队伍名称" onBlur={this.handleInputBlur} ref={this.inputRef} className="pt-operation-item-content-body-aside-team" />
                                 <p><svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" fill="#fefefe"><path d="M360-266h230q14 0 23.5-6t16.5-18l78-182q2-5 3.5-15t1.5-15v-24q0-14-6.5-20.5T686-553H472l29-138q2-8 0-15t-7-12l-21-22-161 174-8 16q-4 8-4 17v207q0 23 18 41.5t42 18.5ZM480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z" /></svg></p>
                             </aside>
                         </main>
@@ -103,7 +121,9 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                         fileName,
                         date,
                         content,
+                        this.props.teamName
                     );
+                    console.log(`Team name: ${this.props.teamName}`);
                     console.log(`File content: ${content}`);
 
                     if (this.fileInputRef.current) {
@@ -120,22 +140,34 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
         }
     };
 
-    startPrinting = (e: MouseEvent) => {
-        e.preventDefault();
-        const tasksItems = document.querySelectorAll('.pending') as NodeListOf<HTMLElement>;
-        if (tasksItems.length > 0) {
-            tasksItems.forEach((item) => {
-                item.style.transform = 'translateX(150%)'
-                item.style.opacity = '0';
-            })
-        }
-    }
+
 
     render(): React.ReactNode {
         return (
             <taskContext.Consumer>
                 {
                     value => {
+                        const startPrinting = (e: MouseEvent) => {
+                            e.preventDefault();
+                            const tasksItems = document.querySelectorAll('.pending') as NodeListOf<HTMLElement>;
+                            if (tasksItems.length > 0) {
+                                tasksItems.forEach((item) => {
+                                    item.style.transform = 'translateX(150%)'
+                                    item.style.opacity = '0';
+                                })
+                                value.setWorkingPrinters(value.tasks?.map(task => task.printerId) || []);
+                                let lastItem = tasksItems[tasksItems.length - 1];
+
+                                lastItem.addEventListener('transitionend', async () => {
+                                    value.clearPendingTasks()
+                                    await sleep(1000);
+                                    if (value.tasks) {
+                                        value.clearWorkingPrinters();
+                                        value.setSuccessTasks(value.tasks)
+                                    }
+                                })
+                            }
+                        }
                         return (
                             <div className="pt-operation-handle">
                                 <div className="pt-operation-handle-select" tabIndex={1}>
@@ -159,7 +191,7 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                 <form className="pt-operation-handle-form">
                                     <button className="pt-operation-handle-form-submit" disabled={
                                         value.tasks && value.tasks.length > 0 ? false : true
-                                    } onClick={(e)=>this.startPrinting(e.nativeEvent)}>
+                                    } onClick={(e) => startPrinting(e.nativeEvent)}>
                                         <p className="pt-operation-handle-form-submit-group">
                                             <span className="pt-operation-handle-form-submit-p">Start Printing !</span>
                                             <span className="pt-operation-handle-form-submit-p"><svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="48px" fill="#fff"><path d="m187-551 106 45q18-36 38.5-71t43.5-67l-79-16-109 109Zm154 81 133 133q57-26 107-59t81-64q81-81 119-166t41-192q-107 3-192 41T464-658q-31 31-64 81t-59 107Zm229-96q-20-20-20-49.5t20-49.5q20-20 49.5-20t49.5 20q20 20 20 49.5T669-566q-20 20-49.5 20T570-566Zm-15 383 109-109-16-79q-32 23-67 43.5T510-289l45 106Zm326-694q9 136-34 248T705-418l-2 2-2 2 22 110q3 15-1.5 29T706-250L535-78l-85-198-170-170-198-85 172-171q11-11 25-15.5t29-1.5l110 22q1-1 2-1.5t2-1.5q99-99 211-142.5T881-877ZM149-325q35-35 85.5-35.5T320-326q35 35 34.5 85.5T319-155q-26 26-80.5 43T75-80q15-109 31.5-164t42.5-81Zm42 43q-14 15-25 47t-19 82q50-8 82-19t47-25q19-17 19.5-42.5T278-284q-19-18-44.5-17.5T191-282Z" /></svg></span>
@@ -170,50 +202,91 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                         )
                     }
                 }
-
             </taskContext.Consumer>
         )
     }
 }
 
-class PrinterDetails extends React.Component<PrinterDetalsProps> {
+interface PrinterDetalsState {
+    isWork: boolean;
+    tasksNumber: number;
+    successNumber: number;
+    failNumber: number;
+}
+
+class PrinterDetails extends React.Component<PrinterDetalsProps, PrinterDetalsState> {
     constructor(props: PrinterDetalsProps) {
         super(props);
-        this.state = {};
+        this.state = {
+            isWork: false,
+            tasksNumber: 0,
+            successNumber: 0,
+            failNumber: 0
+        };
     }
     render(): React.ReactNode {
         return (
-            <div className="pt-detail">
-                <div className="pt-detail-device">
-                    <header className="pt-detail-device-name">
-                        <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" className="pt-detail-device-name-svg"><path d="M658-648v-132H302v132h-60v-192h476v192h-60Zm-518 60h680-680Zm599 95q12 0 21-9t9-21q0-12-9-21t-21-9q-12 0-21 9t-9 21q0 12 9 21t21 9Zm-81 313v-192H302v192h356Zm60 60H242v-176H80v-246q0-45.05 30.5-75.53Q141-648 186-648h588q45.05 0 75.53 30.47Q880-587.05 880-542v246H718v176Zm102-236v-186.21Q820-562 806.78-575q-13.23-13-32.78-13H186q-19.55 0-32.77 13.22Q140-561.55 140-542v186h102v-76h476v76h102Z" /></svg>
-                        <p>{this.props.id} 号打印机</p>
-                        <div className="pt-detail-device-name-state"></div>
-                    </header>
-                    <main className="pt-detail-device-body">
-                        <ul className="pt-detail-device-body-items">
-                            <li className="pt-detail-device-body-items-i">❓ 设备类型：</li>
-                            <li className="pt-detail-device-body-items-i">{this.props.color ? '彩色打印机' : '黑白打印机'}</li>
-                        </ul>
-                        <ul className="pt-detail-device-body-items">
-                            <li className="pt-detail-device-body-items-i">💬 设备运行状态：</li>
-                            <li className="pt-detail-device-body-items-i">Pending</li>
-                        </ul>
-                        <ul className="pt-detail-device-body-items">
-                            <li className="pt-detail-device-body-items-i">📃 当前打印任务数：</li>
-                            <li className="pt-detail-device-body-items-i">0</li>
-                        </ul>
-                        <ul className="pt-detail-device-body-items">
-                            <li className="pt-detail-device-body-items-i">🎊 成功打印数：</li>
-                            <li className="pt-detail-device-body-items-i">0</li>
-                        </ul>
-                        <ul className="pt-detail-device-body-items">
-                            <li className="pt-detail-device-body-items-i">📌 失败打印数：</li>
-                            <li className="pt-detail-device-body-items-i">0</li>
-                        </ul>
-                    </main>
-                </div>
-            </div>
+            <taskContext.Consumer>
+                {
+                    value => {
+                        let tasksNumber = 0;
+                        value.tasks?.forEach(task => {
+                            if (task.printerId === this.props.id) {
+                                tasksNumber++;
+                            }
+                        })
+                        let isWork = false;
+                        if (value.workingPrinters && value.workingPrinters.includes(this.props.id)) {
+                            isWork = true;
+                        }
+
+
+                        // if (value.workingPrinters && value.workingPrinters.includes(this.props.id)) {
+                        //     this.setState({
+                        //         isWork: true
+                        //     })
+                        // } else {
+                        //     this.setState({
+                        //         isWork: false
+                        //     })
+                        // }
+
+                        return (
+                            <div className="pt-detail">
+                                <div className="pt-detail-device">
+                                    <header className="pt-detail-device-name">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" className="pt-detail-device-name-svg"><path d="M658-648v-132H302v132h-60v-192h476v192h-60Zm-518 60h680-680Zm599 95q12 0 21-9t9-21q0-12-9-21t-21-9q-12 0-21 9t-9 21q0 12 9 21t21 9Zm-81 313v-192H302v192h356Zm60 60H242v-176H80v-246q0-45.05 30.5-75.53Q141-648 186-648h588q45.05 0 75.53 30.47Q880-587.05 880-542v246H718v176Zm102-236v-186.21Q820-562 806.78-575q-13.23-13-32.78-13H186q-19.55 0-32.77 13.22Q140-561.55 140-542v186h102v-76h476v76h102Z" /></svg>
+                                        <p>{this.props.id} 号打印机</p>
+                                        <div className="pt-detail-device-name-state"></div>
+                                    </header>
+                                    <main className="pt-detail-device-body">
+                                        <ul className="pt-detail-device-body-items">
+                                            <li className="pt-detail-device-body-items-i">❓ 设备类型：</li>
+                                            <li className="pt-detail-device-body-items-i">{this.props.color ? '彩色打印机' : '黑白打印机'}</li>
+                                        </ul>
+                                        <ul className="pt-detail-device-body-items">
+                                            <li className="pt-detail-device-body-items-i">💬 设备运行状态：</li>
+                                            <li className="pt-detail-device-body-items-i">{isWork ? 'Running' : 'Pending'}</li>
+                                        </ul>
+                                        <ul className="pt-detail-device-body-items">
+                                            <li className="pt-detail-device-body-items-i">📃 当前打印任务数：</li>
+                                            <li className="pt-detail-device-body-items-i">{tasksNumber}</li>
+                                        </ul>
+                                        <ul className="pt-detail-device-body-items">
+                                            <li className="pt-detail-device-body-items-i">🎊 成功打印数：</li>
+                                            <li className="pt-detail-device-body-items-i">{this.state.successNumber}</li>
+                                        </ul>
+                                        <ul className="pt-detail-device-body-items">
+                                            <li className="pt-detail-device-body-items-i">📌 失败打印数：</li>
+                                            <li className="pt-detail-device-body-items-i">{this.state.failNumber}</li>
+                                        </ul>
+                                    </main>
+                                </div>
+                            </div>
+                        )
+                    }
+                }
+            </taskContext.Consumer>
         )
     }
 }
@@ -227,7 +300,7 @@ export default class PrinterCard extends React.Component<any, PrinterCardState> 
             printerSerialNumber: 5500,
             printerStatus: "Pending",
             color: false,
-            // tasks: null
+            teamName: "",
         };
     }
 
@@ -240,12 +313,19 @@ export default class PrinterCard extends React.Component<any, PrinterCardState> 
         })
     }
 
+    private setTeamName = (name: string) => {
+        this.setState({
+            teamName: name
+        });
+    }
+
+
     render(): React.ReactNode {
         return (
             <div className="pt">
                 <div className="pt-operation">
-                    <OperationItems name={this.state.printerName} seriesalNumber={this.state.printerSerialNumber} />
-                    <OperationHandle changeNumber={this.setPrinter} printerId={this.state.printerId} />
+                    <OperationItems setTeamName={this.setTeamName} name={this.state.printerName} seriesalNumber={this.state.printerSerialNumber} />
+                    <OperationHandle teamName={this.state.teamName} changeNumber={this.setPrinter} printerId={this.state.printerId} />
                 </div>
                 <PrinterDetails id={this.state.printerId} color={this.state.color} />
             </div>
