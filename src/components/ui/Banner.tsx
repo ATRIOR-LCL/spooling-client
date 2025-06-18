@@ -7,6 +7,12 @@ import Info from "./Info";
 interface BannerState {
     showInfo: boolean;
 }
+/**
+ * Banner组件，页面顶部的横幅包含ICPC Logo、标题、信息按钮和主题切换按钮
+ * @param props - 组件的属性
+ * @param props.showInfo - 显示比赛注意信息的函数
+ * @returns {React.ReactNode} 返回一个包含横幅内容的JSX元素
+ */
 class Banner extends React.Component {
     constructor(props: any) {
         super(props);

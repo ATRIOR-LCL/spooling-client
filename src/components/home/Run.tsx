@@ -17,6 +17,16 @@ interface TaskCardProps extends TaskItemType {
     toClose: (printerId: number) => void;
 }
 
+/**
+ * TaskCard组件，显示单个任务卡片
+ * @param {TaskCardProps} props - 组件的属性
+ * @param {number} props.printerId - 打印机ID
+ * @param {string} props.fileName - 文件名
+ * @param {string} props.date - 任务日期
+ * @param {number} props.index - 任务索引
+ * @param {function} props.toClose - 关闭任务的函数
+ * @returns {React.ReactNode} 返回一个包含任务卡片的JSX元素
+ */
 class TaskCard extends React.Component<TaskCardProps, {}> {
     private cardRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
     constructor(props: TaskCardProps) {
@@ -56,7 +66,10 @@ class TaskCard extends React.Component<TaskCardProps, {}> {
 }
 
 
-
+/**
+ * TaskItems组件，显示所有当前打印任务
+ * * @returns {React.ReactNode} 返回一个包含当前打印任务列表的JSX元素
+ */
 class TaskItems extends React.Component<any, TaskItemsState> {
     constructor(props: any) {
         super(props);
@@ -105,6 +118,17 @@ interface OverCardProps {
     showCode: (fileContent: string) => void;
 }
 
+/**
+ * OverCard组件，显示已完成的任务卡片
+ * * @param {OverCardProps} props - 组件的属性
+ * @param {string} props.fileName - 文件名
+ * @param {string} props.date - 任务完成日期
+ * @param {string} props.fileContent - 文件内容
+ * @param {number} props.transitionDelay - 动画延迟时间
+ * @param {boolean} props.animate - 是否启用动画
+ * @param {function} props.showCode - 点击卡片时显示代码的函数
+ * @returns {React.ReactNode} 返回一个包含已完成任务卡片的JSX元素
+ */
 class OverCard extends React.Component<OverCardProps> {
     private overCardRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
     constructor(props: OverCardProps) {
@@ -136,6 +160,11 @@ class OverCard extends React.Component<OverCardProps> {
     }
 }
 
+/**
+ * OverItemds组件，显示所有已完成的任务
+ * @returns {React.ReactNode} 返回一个包含已完成任务列表的JSX元素
+ * 
+ */
 class OverItemds extends React.Component<any, { animate: boolean }> {
     constructor(params: any) {
         super(params);
@@ -185,7 +214,29 @@ class OverItemds extends React.Component<any, { animate: boolean }> {
     }
 }
 
-
+/**
+ * Run组件，显示当前打印任务和已完成任务
+ * @returns {React.ReactNode} 返回一个包含任务列表和已完成任务列表的JSX元素
+ * @see {@link TaskItems} 任务列表组件
+ * @see {@link OverItemds} 已完成任务列表组件
+ * @see {@link taskContext} 任务上下文，用于在组件树中共享任务状态
+ * @see {@link TaskItemType} 任务项类型，用于定义任务项的结构
+ * @see {@link TaskCard} 任务卡片组件，用于显示单个任务项
+ * @see {@link OverCard} 已完成任务卡片组件，用于显示已完成的任务项
+ * @see {@link OverItemds} 已完成任务列表组件，用于显示所有已完成的任务
+ * * @see {@link TaskItemsState} 任务列表组件的状态类型
+ * * @see {@link TaskCardProps} 任务卡片组件的属性类型
+ * * @see {@link OverCardProps} 已完成任务卡片组件的属性类型
+ * * @see {@link Run} 运行组件，用于处理打印机任务和显示任务状态
+ * * @see {@link taskContext} 任务上下文，用于在组件树中共享任务状态
+ * * @see {@link TaskItemType} 任务项类型，用于定义任务项的结构
+ * * * @see {@link TaskCard} 任务卡片组件，用于显示单个任务项
+ * * @see {@link OverCard} 已完成任务卡片组件，用于显示已完成的任务项
+ * * @see {@link OverItemds} 已完成任务列表组件，用于显示所有已完成的任务
+ * * @see {@link TaskItemsState} 任务列表组件的状态类型
+ * * @see {@link TaskCardProps} 任务卡片组件的属性类型
+ * * @see {@link OverCardProps} 已完成任务卡片组件的属性类型
+ */
 export default class Run extends React.Component {
     render(): React.ReactNode {
         return (

@@ -73,6 +73,46 @@ export const taskContext = React.createContext<TaskContextType>({
     clearWorkingPrinters: () => { }
 });
 
+/**
+ * HomePage组件，主页的主要内容
+ * 包含打印机卡片、运行组件和代码预览
+ * @extends React.Component
+ * @class HomePage
+ * @classdesc 主页组件，包含打印机卡片、运行组件和代码预览
+ * @property {any} props - 组件的属性
+ * @property {HomePageState} state - 组件的状态
+ * @property {Array<{ printerId: number; fileName: string; date: string; fileContent: string, index: number, teamName: string }> | null} state.tasks - 当前待处理的任务列表
+ * @property {Array<number> | null} state.workingPrinters - 当前正在工作的打印机列表
+ * @property {string | null} state.currentCode - 当前显示的代码内容
+ * @property {string} state.currentTeamName - 当前显示代码的队伍名称
+ * @property {Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string }> | null} state.successTasks - 成功处理的任务列表
+ * @property {Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string }> | null} state.faildTasks - 失败处理的任务列表
+ * @description 主页组件，包含打印机卡片、运行组件和代码预览
+ * @example
+ * <HomePage />
+ * @returns {React.ReactNode} 返回一个包含打印机卡片、运行组件和代码预览的JSX元素
+ * @see {@link PrinterCard} 打印机卡片组件
+ * @see {@link Run} 运行组件
+ * @see {@link Code} 代码预览组件
+ * @see {@link taskContext} 任务上下文，用于在组件树中共享任务状态
+ * @see {@link ErrorBoundary} 错误边界组件，用于捕获子组件中的错误并显示错误信息
+ * @see {@link HomePageState} 主页组件的状态类型
+ * @see {@link SuccessTaskType} 成功任务类型，用于表示成功处理的任务
+ * @see {@link TaskContextType} 任务上下文类型，用于定义任务上下文的结构和方法
+ * @see {@link Banner} 横幅组件，包含ICPC Logo、标题、信息按钮和主题切换按钮
+ * @see {@link Footer} 页脚组件，包含版权信息和其他链接
+ * @see {@link Info} 信息按钮组件，用于显示比赛注意信息
+ * @see {@link ThemeButton} 主题切换按钮组件，用于切换页面主题
+ * @see {@link Code} 代码预览组件，用于显示代码内容和队伍名称
+ * @see {@link ErrorBoundary} 错误边界组件，用于捕获子组件中的错误并显示错误信息
+ * @see {@link Run} 运行组件，用于处理打印机任务和显示任务状态
+ * @see {@link PrinterCard} 打印机卡片组件，用于显示打印机状态和任务信息
+ * @see {@link taskContext} 任务上下文，用于在组件树中共享任务状态
+ * @see {@link HomePageState} 主页组件的状态类型
+ * @see {@link SuccessTaskType} 成功任务类型，用于表示成功处理的任务
+ * @see {@link TaskContextType} 任务上下文类型，用于定义任务上下文的结构和方法
+ * @see {@link ErrorBoundary} 错误边界组件，用于捕获子组件中的错误并显示错误信息 
+ */
 class HomePage extends React.Component<any, HomePageState> {
     constructor(props: any) {
         super(props);

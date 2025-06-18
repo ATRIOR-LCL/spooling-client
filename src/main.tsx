@@ -4,17 +4,12 @@ import HomePage from "./pages/HomePage";
 import Banner from "./components/ui/Banner";
 import Footer from "./components/ui/Footetr";
 
-interface AppState {
-  isLoginned: boolean;
-}
 
-class App extends React.Component<{}, AppState> {
-  constructor(props: {}) {
-    super(props);
-    this.state = {
-      isLoginned: false,
-    };
-  }
+/**
+ * 根组件，页面元素的最外层容器
+ * @returns {React.ReactNode} 返回一个包含Banner、HomePage和Footer的JSX元素
+ */
+class App extends React.Component {
   render() {
     return (
       <div className="app">

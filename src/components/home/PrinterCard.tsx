@@ -34,7 +34,16 @@ interface PrinterDetalsProps {
     color: boolean;
 }
 
-
+/**
+ * 打印机操作项组件，显示打印机信息和队伍名称输入框
+ * * @class OperationItems
+ * @extends React.Component
+ * * @property {PrinterItemsProps} props - 组件的属性，包含打印机名称、序列号和设置队伍名称的函数
+ * * @description 打印机操作项组件，显示打印机信息和队伍名称输入框
+ * * @example
+ * <OperationItems name="Printer - 1" seriesalNumber={5501} setTeamName={(name) => console.log(`Team name set to: ${name}`)} />
+ * @returns {React.ReactNode} 返回一个包含打印机信息和队伍名称输入框的JSX元素
+ */
 class OperationItems extends React.Component<PrinterItemsProps> {
     private inputRef = React.createRef<HTMLInputElement>();
     constructor(props: PrinterItemsProps) {
@@ -90,6 +99,17 @@ class OperationItems extends React.Component<PrinterItemsProps> {
     }
 }
 
+/**
+ * 操作处理组件，包含选择打印机、选择文件和开始打印按钮
+ * * @class OperationHandle
+ * @extends React.Component
+ * * @property {PrinterHandleProps} props - 组件的属性，包含打印机ID、队伍名称和更改打印机编号的函数
+ * * @property {PrinterHandleState} state - 组件的状态，包含文件名、文件内容和日期
+ * * @description 操作处理组件，包含选择打印机、选择文件和开始打印按钮
+ * * @example
+ * <OperationHandle printerId={1} teamName="Team A" changeNumber={(id) => console.log(`Selected printer: ${id}`)} />
+ * @returns {React.ReactNode} 返回一个包含选择打印机、选择文件和开始打印按钮的JSX元素
+ */
 class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleState> {
     fileInputRef = React.createRef<HTMLInputElement>();
     constructor(props: PrinterHandleProps) {
@@ -214,6 +234,18 @@ interface PrinterDetalsState {
     failNumber: number;
 }
 
+/**
+ * 打印机详情组件，显示打印机的详细信息和状态
+ * @class PrinterDetails
+ * @extends React.Component
+ * @property {PrinterDetalsProps} props - 组件的属性，包含打印机ID和颜色
+ * * @property {PrinterDetalsState} state - 组件的状态，包含打印机是否工作、任务数量、成功数量和失败数量
+ * * @description 打印机详情组件，显示打印机的详细信息和状态
+ * * @example
+ * <PrinterDetails id={1} color={false} />
+ * @returns {React.ReactNode} 返回一个包含打印机详细信息的JSX元素
+ * 
+ */
 class PrinterDetails extends React.Component<PrinterDetalsProps, PrinterDetalsState> {
     constructor(props: PrinterDetalsProps) {
         super(props);
@@ -239,17 +271,6 @@ class PrinterDetails extends React.Component<PrinterDetalsProps, PrinterDetalsSt
                         if (value.workingPrinters && value.workingPrinters.includes(this.props.id)) {
                             isWork = true;
                         }
-
-
-                        // if (value.workingPrinters && value.workingPrinters.includes(this.props.id)) {
-                        //     this.setState({
-                        //         isWork: true
-                        //     })
-                        // } else {
-                        //     this.setState({
-                        //         isWork: false
-                        //     })
-                        // }
 
                         return (
                             <div className="pt-detail">
@@ -291,6 +312,18 @@ class PrinterDetails extends React.Component<PrinterDetalsProps, PrinterDetalsSt
     }
 }
 
+/**
+ * 打印机卡片组件，包含打印机信息、操作项和打印机详情
+ * * @class PrinterCard
+ * @extends React.Component
+ * @property {PrinterCardState} state - 组件状态，包含打印机名称、ID、序列号、状态、颜色和队伍名称
+ * * @property {Function} setPrinter - 设置打印机信息的方法
+ * * @property {Function} setTeamName - 设置队伍名称的方法
+ * * @description 打印机卡片组件，包含打印机信息、操作项和打印机详情
+ * * @example
+ * <PrinterCard />
+ * @returns {React.ReactNode} 返回一个包含打印机信息、操作项和打印机详情的JSX元素
+ */
 export default class PrinterCard extends React.Component<any, PrinterCardState> {
     constructor(props: any) {
         super(props);
