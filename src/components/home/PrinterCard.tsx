@@ -2,6 +2,8 @@ import React from "react";
 import '../../assets/css/printer.less'
 import { taskContext } from "../../pages/HomePage";
 import { sleep } from "../../utils/sleep";
+import createUniqueRandomGenerator from "../../utils/getRandom";
+
 
 interface PrinterCardState {
     printerName: string;
@@ -55,7 +57,8 @@ class OperationItems extends React.Component<PrinterItemsProps> {
         const inputElement = this.inputRef.current;
         if (inputElement) {
             const teamName = inputElement.value.trim();
-            if (teamName) {
+            if (teamName !== "") {
+                console.log(`队伍名称设置为: ${teamName}`);
                 this.props.setTeamName(teamName);
             } else {
                 this.props.setTeamName("未命名队伍");
@@ -121,47 +124,6 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
         };
     }
 
-    handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, increase: Function) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const fileName = file.name;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const content = e.target?.result;
-                if (content) {
-                    const date = new Date().toLocaleString();
-                    this.setState({
-                        fileName,
-                        fileContent: content as string,
-                        date
-                    });
-
-                    increase(
-                        this.props.printerId,
-                        fileName,
-                        date,
-                        content,
-                        this.props.teamName
-                    );
-                    console.log(`Team name: ${this.props.teamName}`);
-                    console.log(`File content: ${content}`);
-
-                    if (this.fileInputRef.current) {
-                        this.fileInputRef.current.value = "";
-                    }
-                }
-            };
-            reader.onerror = (error) => {
-                console.error("Error reading file:", error);
-            };
-            reader.readAsText(file);
-        } else {
-            console.log("No file selected.");
-        }
-    };
-
-
-
     render(): React.ReactNode {
         return (
             <taskContext.Consumer>
@@ -170,23 +132,17 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                         const startPrinting = (e: MouseEvent) => {
                             e.preventDefault();
                             const tasksItems = document.querySelectorAll('.pending') as NodeListOf<HTMLElement>;
-                            if (tasksItems.length > 0) {
-                                tasksItems.forEach((item) => {
-                                    item.style.transform = 'translateX(150%)'
-                                    item.style.opacity = '0';
-                                })
-                                value.setWorkingPrinters(value.tasks?.map(task => task.printerId) || []);
-                                let lastItem = tasksItems[tasksItems.length - 1];
-
-                                lastItem.addEventListener('transitionend', async () => {
-                                    value.clearPendingTasks()
-                                    await sleep(1000);
-                                    if (value.tasks) {
-                                        value.clearWorkingPrinters();
-                                        value.setSuccessTasks(value.tasks)
+                            const reqPromise = new Promise((resolve, reject) => {
+                                const timer = setInterval(() => {
+                                    const getRandom = createUniqueRandomGenerator(0, tasksItems.length - 1);
+                                    let randomNum = getRandom();
+                                    if (value.setPerndingTask(randomNum) == 0) {
+                                        value.clearPendingTask();
+                                        clearInterval(timer);
+                                        resolve(true);
                                     }
-                                })
-                            }
+                                }, 1000);
+                            })
                         }
                         return (
                             <div className="pt-operation-handle">
@@ -194,20 +150,20 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                     <p className="pt-operation-handle-select-btn">Select Printer</p>
                                     <svg xmlns="http://www.w3.org/2000/svg" className="pt-operation-handle-select-logo" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fff"><path d="M222-200 80-342l56-56 85 85 170-170 56 57-225 226Zm0-320L80-662l56-56 85 85 170-170 56 57-225 226Zm298 240v-80h360v80H520Zm0-320v-80h360v80H520Z" /></svg>
                                     <div className="pt-operation-handle-select-box">
-                                        <p className="pt-operation-handle-select-box-item" onClick={() => this.props.changeNumber(1)}>1</p>
-                                        <p className="pt-operation-handle-select-box-item" onClick={() => this.props.changeNumber(2)}>2</p>
-                                        <p className="pt-operation-handle-select-box-item" onClick={() => this.props.changeNumber(3)}>3</p>
+                                        <p className="pt-operation-handle-select-box-item" onClick={() => { this.props.changeNumber(1); value.setCurrentPrinter(1) }}>1</p>
+                                        <p className="pt-operation-handle-select-box-item" onClick={() => { this.props.changeNumber(2); value.setCurrentPrinter(2) }}>2</p>
+                                        <p className="pt-operation-handle-select-box-item" onClick={() => { this.props.changeNumber(3); value.setCurrentPrinter(3) }}>3</p>
                                     </div>
                                 </div>
-                                <form className="pt-operation-handle-form">
-                                    <label className="pt-operation-handle-form-select" htmlFor="select">
+                                <div className="pt-operation-handle-form" onClick={value.toSelect}>
+                                    <div className="pt-operation-handle-form-select">
                                         <p className="pt-operation-handle-form-select-group">
                                             <span className="pt-operation-handle-form-select-p">Select File</span>
                                             <span className="pt-operation-handle-form-select-p"><svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="48px" fill="#fff"><path d="M319-250h322v-60H319v60Zm0-170h322v-60H319v60ZM220-80q-24 0-42-18t-18-42v-680q0-24 18-42t42-18h361l219 219v521q0 24-18 42t-42 18H220Zm331-554v-186H220v680h520v-494H551ZM220-820v186-186 680-680Z" /></svg></span>
                                         </p>
-                                    </label>
-                                    <input type="file" name="" id="select" style={{ display: "none" }} ref={this.fileInputRef} onChange={(e) => this.handleFileChange(e, value.increaseTasks)} />
-                                </form>
+                                    </div>
+                                </div>
+
                                 <form className="pt-operation-handle-form">
                                     <button className="pt-operation-handle-form-submit" disabled={
                                         value.tasks && value.tasks.length > 0 ? false : true
@@ -227,12 +183,6 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
     }
 }
 
-interface PrinterDetalsState {
-    isWork: boolean;
-    tasksNumber: number;
-    successNumber: number;
-    failNumber: number;
-}
 
 /**
  * 打印机详情组件，显示打印机的详细信息和状态
@@ -246,15 +196,9 @@ interface PrinterDetalsState {
  * @returns {React.ReactNode} 返回一个包含打印机详细信息的JSX元素
  * 
  */
-class PrinterDetails extends React.Component<PrinterDetalsProps, PrinterDetalsState> {
+class PrinterDetails extends React.Component<PrinterDetalsProps> {
     constructor(props: PrinterDetalsProps) {
         super(props);
-        this.state = {
-            isWork: false,
-            tasksNumber: 0,
-            successNumber: 0,
-            failNumber: 0
-        };
     }
     render(): React.ReactNode {
         return (
@@ -283,7 +227,7 @@ class PrinterDetails extends React.Component<PrinterDetalsProps, PrinterDetalsSt
                                     <header className="pt-detail-device-name">
                                         <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" className="pt-detail-device-name-svg"><path d="M658-648v-132H302v132h-60v-192h476v192h-60Zm-518 60h680-680Zm599 95q12 0 21-9t9-21q0-12-9-21t-21-9q-12 0-21 9t-9 21q0 12 9 21t21 9Zm-81 313v-192H302v192h356Zm60 60H242v-176H80v-246q0-45.05 30.5-75.53Q141-648 186-648h588q45.05 0 75.53 30.47Q880-587.05 880-542v246H718v176Zm102-236v-186.21Q820-562 806.78-575q-13.23-13-32.78-13H186q-19.55 0-32.77 13.22Q140-561.55 140-542v186h102v-76h476v76h102Z" /></svg>
                                         <p>{this.props.id} 号打印机</p>
-                                        <div style={{backgroundColor: tasksNumber ? 'red' : 'green'}} className="pt-detail-device-name-state"></div>
+                                        <div style={{ backgroundColor: tasksNumber ? 'red' : 'green' }} className="pt-detail-device-name-state"></div>
                                     </header>
                                     <main className="pt-detail-device-body">
                                         <ul className="pt-detail-device-body-items">
@@ -351,18 +295,16 @@ export default class PrinterCard extends React.Component<any, PrinterCardState> 
         })
     }
 
-    private setTeamName = (name: string) => {
-        this.setState({
-            teamName: name
-        });
-    }
-
 
     render(): React.ReactNode {
         return (
             <div className="pt">
                 <div className="pt-operation">
-                    <OperationItems setTeamName={this.setTeamName} name={this.state.printerName} seriesalNumber={this.state.printerSerialNumber} />
+                    <taskContext.Consumer>
+                        {
+                            value => <OperationItems setTeamName={value.setTeamName} name={this.state.printerName} seriesalNumber={this.state.printerSerialNumber} />
+                        }
+                    </taskContext.Consumer>
                     <OperationHandle teamName={this.state.teamName} changeNumber={this.setPrinter} printerId={this.state.printerId} />
                 </div>
                 <PrinterDetails id={this.state.printerId} color={this.state.color} />

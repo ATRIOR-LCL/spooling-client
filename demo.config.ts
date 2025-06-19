@@ -5,3 +5,12 @@ interface RequestInterface {
     fileContent: string;
     color: boolean;
 }
+interface Job {
+    // ...
+}
+
+interface ResponseInterface {
+    success: boolean;
+    message: string;
+    data: Job;
+}

@@ -2,7 +2,6 @@ import React from "react";
 import '../../assets/css/run.less'
 import { taskContext } from "../../pages/HomePage";
 
-
 interface TaskItemType {
     printerId: number;
     fileName: string;
@@ -27,11 +26,10 @@ interface TaskCardProps extends TaskItemType {
  * @param {function} props.toClose - 关闭任务的函数
  * @returns {React.ReactNode} 返回一个包含任务卡片的JSX元素
  */
-class TaskCard extends React.Component<TaskCardProps, {}> {
+export class TaskCard extends React.Component<TaskCardProps, {}> {
     private cardRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
     constructor(props: TaskCardProps) {
         super(props);
-        this.state = {};
     }
 
     componentDidMount(): void {
@@ -88,15 +86,11 @@ class TaskItems extends React.Component<any, TaskItemsState> {
                                 <div className="run-task-items">
                                     <div className="run-task-items-content">
                                         {
-                                            value.tasks && value.tasks.length > 0 ? (
-                                                value.tasks.map((item, index) => {
-                                                    return <TaskCard toClose={value.decreaseTasks} index={item.index} key={index} printerId={item.printerId} fileName={item.fileName} date={item.date} />
-                                                })
-                                            ) : (
+                                            value.tasks === null || value.tasks.length === 0 ? (
                                                 <div className="run-task-items-content-empty">
                                                     <p>There are currently no print tasks 😶</p>
                                                 </div>
-                                            )
+                                            ) : null
                                         }
                                     </div>
                                 </div>
@@ -136,7 +130,6 @@ class OverCard extends React.Component<OverCardProps> {
     }
     componentDidMount() {
         if (this.props.animate && this.overCardRef.current) {
-            this.overCardRef.current?.style.setProperty('transition-delay', `${this.props.transitionDelay * 0.1}s`);
             setTimeout(() => {
                 this.overCardRef.current?.classList.add('over-animate');
             }, 20);
@@ -207,7 +200,7 @@ class OverItemds extends React.Component<any, { animate: boolean }> {
                                         {
                                             value.successTasks && value.successTasks.length > 0 ? (
                                                 value.successTasks.map((item, index) => {
-                                                    return <OverCard animate={this.state.animate} transitionDelay={index} showCode={() => value.showCode(item.fileContent, item.teamName, item.printerId === 3 ? true : false)} key={index} fileName={item.fileName} date={item.date} fileContent={item.fileContent} />
+                                                    return <OverCard animate={this.state.animate} transitionDelay={index} showCode={() => value.showCode(item.fileContent, item.printerId === 3 ? true : false)} key={index} fileName={item.fileName} date={item.date} fileContent={item.fileContent} />
                                                 })
                                             ) : (
                                                 <div className="run-task-items-content-empty">

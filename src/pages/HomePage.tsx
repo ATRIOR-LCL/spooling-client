@@ -3,7 +3,9 @@ import '../assets/css/home.less';
 import PrinterCard from "../components/home/PrinterCard";
 import Run from "../components/home/Run";
 import Code from "../components/ui/Code";
-
+import Select from "../components/ui/Select";
+import { TaskCard } from "../components/home/Run";
+import ReactDOM from 'react-dom';
 
 class ErrorBoundary extends React.Component {
     state = { hasError: false };
@@ -32,6 +34,8 @@ interface HomePageState {
         content: string | null;
         color: boolean;
     }
+    isSelecting: boolean;
+    currentPrinter: number;
     currentTeamName: string;
     successTasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string }> | null;
     faildTasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string }> | null;
@@ -49,33 +53,47 @@ interface TaskContextType {
     tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string, index: number }> | null;
     successTasks: Array<SuccessTaskType> | null;
     workingPrinters: Array<number> | null;
+    currentPrinter: number;
+    currentTeamName: string;
     increaseTasks: (printerId: number, fileName: string, date: string, fileContent: string, teamName: string) => void;
     decreaseTasks: (printerId: number) => void;
-    showCode: (fileContent: string, teamName: string, color: boolean) => void;
-    clearPendingTasks: () => void;
-    setSuccessTasks: (arr: Array<SuccessTaskType>) => void;
+    showCode: (fileContent: string, color: boolean) => void;
+    setPerndingTask: (taskId: number | null) => number;
+    setSuccessTasks: (obj: SuccessTaskType) => void;
     setFaildTasks: (printerId: number, fileName: string, date: string, fileContent: string, teamName: string) => void;
     getSuccessTasksNumber: (printerId: number) => number;
     getFaildTasksNumber: (printerId: number) => number;
     setWorkingPrinters: (workingPrinters: Array<number>) => void;
     clearWorkingPrinters: () => void;
     clearOverallTasks: () => void;
+    setCurrentPrinter: (printerId: number) => void;
+    toSelect: () => void;
+    closeSelect: () => void;
+    setTeamName: (teamName: string) => void;
+    clearPendingTask: () => void; // 可选方法，用于清除待处理任务
 }
 export const taskContext = React.createContext<TaskContextType>({
     tasks: null,
     successTasks: null,
     workingPrinters: null,
+    currentPrinter: 1,
+    currentTeamName: '未命名队伍',
     increaseTasks: () => { },
     decreaseTasks: () => { },
     showCode: () => { },
-    clearPendingTasks: () => { },
+    setPerndingTask: () => 0,
     setSuccessTasks: () => { },
     setFaildTasks: () => { },
     getSuccessTasksNumber: () => 0,
     getFaildTasksNumber: () => 0,
     setWorkingPrinters: () => { },
     clearWorkingPrinters: () => { },
-    clearOverallTasks: () => { }
+    clearOverallTasks: () => { },
+    setCurrentPrinter: () => { },
+    toSelect: () => { },
+    closeSelect: () => { },
+    setTeamName: () => { },
+    clearPendingTask: () => { }
 });
 
 /**
@@ -130,15 +148,31 @@ class HomePage extends React.Component<any, HomePageState> {
             workingPrinters: null,
             currentTeamName: '未命名队伍',
             successTasks: null,
-            faildTasks: null
+            faildTasks: null,
+            currentPrinter: 1,
+            isSelecting: false
         };
     }
+    /**
+     * 在就绪窗口添加打印任务
+     * @description 因为 setPendingTask 选择操作 DOM 而不是提供过状态来渲染 DOM  ，那么就不能通过 state 来生成任务卡片，state 仅仅作为标记
+     * @see {@link setPendingTask}
+     */
     private increaseTasks = (printerId: number, fileName: string, date: string, fileContent: string, teamName: string): void => {
-        this.setState((prevState) => ({
-            tasks: prevState.tasks === null ?
-                ([{ printerId, fileName, date, fileContent, index: 0, teamName }]) :
-                ([...prevState.tasks, { printerId, fileName, date, fileContent, index: prevState.tasks.length, teamName }])
-        }));
+        let _index = 0;
+        this.setState((prevState) => {
+            _index = prevState.tasks ? prevState.tasks.length : 0;
+            return {
+                tasks: prevState.tasks === null ?
+                    ([{ printerId, fileName, date, fileContent, index: 0, teamName }]) :
+                    ([...prevState.tasks, { printerId, fileName, date, fileContent, index: prevState.tasks.length, teamName }])
+            }
+        });
+        const container = document.querySelector('.run-task-items-content') as HTMLDivElement;
+        const taskCard = <TaskCard toClose={() => this.setPendingTask(_index)} index={_index} fileName={fileName} date={date} printerId={printerId} />
+        const taskCardElement = document.createElement('div');
+        ReactDOM.render(taskCard, taskCardElement);
+        container.appendChild(taskCardElement);
     }
 
     private decreaseTasks = (index: number): void => {
@@ -147,13 +181,12 @@ class HomePage extends React.Component<any, HomePageState> {
         }));
     }
 
-    private showCode = (fileContent: string, teamName: string, color: boolean): void => {
+    private showCode = (fileContent: string, color: boolean): void => {
         this.setState({
             currentCode: {
                 content: fileContent,
                 color: color
             },
-            currentTeamName: teamName
         });
     }
 
@@ -165,11 +198,66 @@ class HomePage extends React.Component<any, HomePageState> {
             }
         });
     }
+    /**
+     * 设置打印机的任务状态
+     * @param taskId 任务ID，如果为null则清除待处理任务
+     * @description 设置待处理任务，移除指定任务并重新计算剩余任务的位置, 采用 FLIP 动画的思想，操作真实 DOM
+     * @returns {number} 返回1表示成功设置待处理任务，返回0表示没有待处理任务或任务ID为null
+     */
+    private setPendingTask = (taskId: number | null): number => {
+        if (taskId === null) {
+            console.log('任务ID为null，无法设置待处理任务');
+            return 0;
+        } else {
+            const container = document.querySelector('.run-task-items-content') as HTMLDivElement;
+            const items = Array.from(container.children) as HTMLDivElement[];
+            if (items.length == 0 || items[taskId].classList.contains('run-task-items-content-empty')) {
+                this.clearPendingTask();
+                return 0;
+            };
+            const target = items[taskId];
 
-    private clearPendingTasks = (): void => {
-        this.setState({
-            tasks: null
-        });
+            // 1. 记录每个元素的初始位置
+            const firstRects = new Map();
+            items.forEach((item) => {
+                firstRects.set(item, item.getBoundingClientRect());
+            })
+
+            // 2. 让目标元素移出
+            target.style.transition = "transform 0.5s ease, opacity 0.3s ease";
+            target.style.transform = 'translateX(150%)';
+            target.style.opacity = '0';
+
+            // 3. 等待动画结束
+            target.addEventListener('transitionend', () => {
+                target.remove();
+
+                const remainingItems = Array.from(container.children) as HTMLDivElement[];
+                if (remainingItems.length === 0) {
+                    this.clearPendingTask();
+                    return 0;
+                }
+                // 4. 重新计算剩余元素的位置
+                remainingItems.forEach((item) => {
+                    const first = firstRects.get(item);
+                    const last = item.getBoundingClientRect();
+                    const deltaY = first.top - last.top;
+
+                    // 5. 设置反向位移 + 回弹
+                    item.style.transform = `translateY(${deltaY}px)`;
+                    item.style.transition = "transform 0s";
+
+                    // 6. 强制重绘
+                    requestAnimationFrame(() => {
+                        remainingItems.forEach((item) => {
+                            item.style.transition = "transform 0.5s ease";
+                            item.style.transform = '';
+                        })
+                    })
+                })
+            })
+            return 1;
+        }
     }
 
     private clearOverallTasks = (): void => {
@@ -186,10 +274,17 @@ class HomePage extends React.Component<any, HomePageState> {
         });
     }
 
-    private setSuccessTasks = (arr: Array<SuccessTaskType>): void => {
-        this.setState({
-            successTasks: arr
-        })
+    /**
+     *  设置成功任务列表，将新的成功任务添加到现有的成功任务列表中 
+     * @param successTask 成功任务对象，包含打印机ID、文件名、日期、文件内容和队伍名称
+     * @description 采用虚拟 DOM 在成功数组后 push 不会影响之前的元素
+     */
+    private setSuccessTasks = (successTask: SuccessTaskType): void => {
+        this.setState(prevState => ({
+            successTasks: prevState.successTasks
+                ? [...prevState.successTasks, successTask]
+                : [successTask]
+        }));
     }
 
     private setFaildTasks = (printerId: number, fileName: string, date: string, fileContent: string, teamName: string): void => {
@@ -220,32 +315,75 @@ class HomePage extends React.Component<any, HomePageState> {
         });
     }
 
+    private setCurrentPrinter = (printerId: number): void => {
+        this.setState({
+            currentPrinter: printerId
+        });
+    }
+
+    private toSelect = (): void => {
+        this.setState({
+            isSelecting: true
+        });
+    }
+
+    private closeSelect = (): void => {
+        this.setState({
+            isSelecting: false
+        });
+    }
+
+    private setTeamName = (teamName: string): void => {
+        this.setState({
+            currentTeamName: teamName
+        });
+    }
+
+    private clearPendingTask = (): void => {
+        this.setState({
+            tasks: null
+        });
+    }
+
 
     render() {
         return (
-            <taskContext.Provider value={
-                {
-                    tasks: this.state.tasks,
-                    successTasks: this.state.successTasks,
-                    workingPrinters: this.state.workingPrinters,
-                    increaseTasks: this.increaseTasks,
-                    decreaseTasks: this.decreaseTasks,
-                    showCode: this.showCode,
-                    clearPendingTasks: this.clearPendingTasks,
-                    setSuccessTasks: this.setSuccessTasks,
-                    setFaildTasks: this.setFaildTasks,
-                    getSuccessTasksNumber: this.getSuccessTasksNumber,
-                    getFaildTasksNumber: this.getFaildTasksNumber,
-                    setWorkingPrinters: this.setWorkingPrinters,
-                    clearWorkingPrinters: this.clearWorkingPrinters,
-                    clearOverallTasks: this.clearOverallTasks
-                }
-            }>
+            <taskContext.Provider
+                value={
+                    {
+                        tasks: this.state.tasks,
+                        successTasks: this.state.successTasks,
+                        workingPrinters: this.state.workingPrinters,
+                        currentPrinter: this.state.currentPrinter,
+                        currentTeamName: this.state.currentTeamName,
+                        increaseTasks: this.increaseTasks,
+                        decreaseTasks: this.decreaseTasks,
+                        showCode: this.showCode,
+                        setPerndingTask: this.setPendingTask,
+                        setSuccessTasks: this.setSuccessTasks,
+                        setFaildTasks: this.setFaildTasks,
+                        getSuccessTasksNumber: this.getSuccessTasksNumber,
+                        getFaildTasksNumber: this.getFaildTasksNumber,
+                        setWorkingPrinters: this.setWorkingPrinters,
+                        clearWorkingPrinters: this.clearWorkingPrinters,
+                        clearOverallTasks: this.clearOverallTasks,
+                        setCurrentPrinter: this.setCurrentPrinter,
+                        toSelect: this.toSelect,
+                        closeSelect: this.closeSelect,
+                        setTeamName: this.setTeamName,
+                        clearPendingTask: this.clearPendingTask
+                    }
+                }>
                 <div className="home">
                     {
+                        this.state.isSelecting
+                            ? <Select printerId={this.state.currentPrinter} teamName={this.state.currentTeamName} />
+                            : null
+                    }
+                    {
                         this.state.currentCode.content
-                        ?<Code code={this.state.currentCode.content} color={this.state.currentCode.color} teamName={this.state.currentTeamName} closeCode={this.closeCode} /> 
-                        : null
+                            ? <Code code={this.state.currentCode.content} color={this.state.currentCode.color} teamName={this.state.currentTeamName} closeCode={this.closeCode} />
+                            : null
                     }
                     <main className="home-main">
                         <section className="home-main-section">
