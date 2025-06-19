@@ -1,96 +1,173 @@
 import React from "react";
 import '../../assets/css/run.less'
-import { taskContext } from "../../pages/HomePage";
+// import { taskContext } from "../../pages/HomePage";
+import { taskContext } from "../../context/taskContext";
 
 interface TaskItemType {
     printerId: number;
     fileName: string;
     date: string;
-    index: number;
-}
-
-interface TaskItemsState {
 }
 
 interface TaskCardProps extends TaskItemType {
-    toClose: (printerId: number) => void;
+    index: number;
+    className?: string;
+    forwardedRef?: React.Ref<HTMLDivElement>;
+    onTransitionEnd?: (e: React.TransitionEvent<HTMLDivElement>) => void;
+    toClose: () => void;
 }
 
-/**
- * TaskCard组件，显示单个任务卡片
- * @param {TaskCardProps} props - 组件的属性
- * @param {number} props.printerId - 打印机ID
- * @param {string} props.fileName - 文件名
- * @param {string} props.date - 任务日期
- * @param {number} props.index - 任务索引
- * @param {function} props.toClose - 关闭任务的函数
- * @returns {React.ReactNode} 返回一个包含任务卡片的JSX元素
- */
-export class TaskCard extends React.Component<TaskCardProps, {}> {
-    private cardRef: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
+interface TaskCardState {
+    state: 'pending' | 'waiting' | 'finished';
+    taskId?: number;
+    lastKnownStatus: string; // 添加用于跟踪上一次状态的字段
+}
+
+export class TaskCard extends React.Component<TaskCardProps, TaskCardState> {
+    static contextType = taskContext;
+    declare context: React.ContextType<typeof taskContext>;
+
     constructor(props: TaskCardProps) {
         super(props);
+        this.state = {
+            state: 'pending',
+            taskId: undefined,
+            lastKnownStatus: 'pending' // 初始化为默认值，在 componentDidMount 中获取真实状态
+        };
     }
 
-    componentDidMount(): void {
-        if (this.cardRef.current) {
-            this.cardRef.current.style.transitionDelay = `${this.props.index * 0.1}s`;
+    componentDidMount() {
+        // 在组件挂载后，获取并设置初始状态
+        const currentStatus = this.getTaskStatus(this.props.index);
+        this.setState({ lastKnownStatus: currentStatus });
+    }
+
+    componentDidUpdate(_prevProps: TaskCardProps) {
+        const currentStatus = this.getTaskStatus(this.props.index);
+        const prevStatus = this.state.lastKnownStatus;
+
+        // 如果状态发生了变化，更新存储的状态
+        if (currentStatus !== prevStatus) {
+            this.setState({ lastKnownStatus: currentStatus });
+
+            // 检查是否从非success状态变为success状态
+            if (currentStatus === 'success' && prevStatus !== 'success') {
+                this.props.toClose();
+
+            }
         }
     }
 
+    getTaskStatus(index: number): string {
+        const { tasks } = this.context;
+        const task = tasks?.find(task => task.index === index);
+        return task?.state || 'pending';
+    }
+
     render(): React.ReactNode {
+        const { fileName, date, printerId, forwardedRef, onTransitionEnd } = this.props;
+        const task = this.context.tasks?.find(task => task.index === this.props.index);
+        const status = task?.state || 'pending';
+        const removing = task?.removing ?? false;
+
         return (
-            <div className="run-card pending" ref={this.cardRef}>
+            <div onTransitionEnd={onTransitionEnd} className={`run-card ${removing ? 'removing' : ''}`} ref={forwardedRef}>
                 <div className="run-card-content">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="run-card-content-logo" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h168q13-36 43.5-58t68.5-22q38 0 68.5 22t43.5 58h168q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm80-80h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm200-190q13 0 21.5-8.5T510-820q0-13-8.5-21.5T480-850q-13 0-21.5 8.5T450-820q0 13 8.5 21.5T480-790ZM200-200v-560 560Z" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="run-card-content-logo" height="24px" viewBox="0 -960 960 960" width="24px">
+                        <path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h168q13-36 43.5-58t68.5-22q38 0 68.5 22t43.5 58h168q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm80-80h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm200-190q13 0 21.5-8.5T510-820q0-13-8.5-21.5T480-850q-13 0-21.5 8.5T450-820q0 13 8.5 21.5T480-790ZM200-200v-560 560Z" />
+                    </svg>
                     <div className="run-card-content-text">
-                        <header className="run-card-content-text-header">{this.props.fileName}</header>
-                        <footer className="run-card-content-text-footer">{this.props.date}</footer>
+                        <header className="run-card-content-text-header">{fileName}</header>
+                        <footer className="run-card-content-text-footer">{date}</footer>
                     </div>
                     <aside className="run-card-content-aside">
-                        <p>Printer - {this.props.printerId}</p>
-                        <button className="run-card-content-aside-close" onClick={
-                            () => {
-                                this.props.toClose(this.props.index);
-                            }
-                        }>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="run-card-content-aside-close-logo" height="24px" viewBox="0 -960 960 960" width="24px"><path d="m336-280 144-144 144 144 56-56-144-144 144-144-56-56-144 144-144-144-56 56 144 144-144 144 56 56ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z" /></svg>
-                        </button>
+                        <p>Printer - {printerId}</p>
+                        {status === 'pending' ? (
+                            <button className="run-card-content-aside-close" onClick={() => this.props.toClose()}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="run-card-content-aside-close-logo" height="24px" viewBox="0 -960 960 960" width="24px">
+                                    <path d="m336-280 144-144 144 144 56-56-144-144 144-144-56-56-144 144-144-144-56 56 144 144-144 144 56 56ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z" />
+                                </svg>
+                            </button>
+                        ) : status === 'waiting' ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" className="run-card-content-aside-close-logo" viewBox="0 -960 960 960" width="24px" fill="#ff1900">
+                                <path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-155.5t86-127Q252-817 325-848.5T480-880q17 0 28.5 11.5T520-840q0 17-11.5 28.5T480-800q-133 0-226.5 93.5T160-480q0 133 93.5 226.5T480-160q133 0 226.5-93.5T800-480q0-17 11.5-28.5T840-520q17 0 28.5 11.5T880-480q0 82-31.5 155t-86 127.5q-54.5 54.5-127 86T480-80Z" />
+                            </svg>
+                        ) : (
+                            status === 'success' ? (null) : (
+                                <svg className="run-card-content-aside-close-logo" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#ff1900">
+                                    <path d="M240-80v-170q-39-17-68.5-45.5t-50-64.5q-20.5-36-31-77T80-520q0-158 112-259t288-101q176 0 288 101t112 259q0 42-10.5 83t-31 77q-20.5 36-50 64.5T720-250v170H240Zm80-80h40v-80h80v80h80v-80h80v80h40v-142q38-9 67.5-30t50-50q20.5-29 31.5-64t11-74q0-125-88.5-202.5T480-800q-143 0-231.5 77.5T160-520q0 39 11 74t31.5 64q20.5 29 50.5 50t67 30v142Zm100-200h120l-60-120-60 120Zm-80-80q33 0 56.5-23.5T420-520q0-33-23.5-56.5T340-600q-33 0-56.5 23.5T260-520q0 33 23.5 56.5T340-440Zm280 0q33 0 56.5-23.5T700-520q0-33-23.5-56.5T620-600q-33 0-56.5 23.5T540-520q0 33 23.5 56.5T620-440ZM480-160Z" />
+                                </svg>
+                            )
+                        )}
                     </aside>
                 </div>
             </div>
-        )
+        );
     }
 }
 
+
+interface TasksItemsInterface {
+    tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string, index: number, removing: boolean, taskId?: number, state?: string }> | null;
+}
 
 /**
  * TaskItems组件，显示所有当前打印任务
  * * @returns {React.ReactNode} 返回一个包含当前打印任务列表的JSX元素
  */
-class TaskItems extends React.Component<any, TaskItemsState> {
-    constructor(props: any) {
+class TaskItems extends React.Component<TasksItemsInterface> {
+    cardRefs: Map<number, React.RefObject<HTMLDivElement>> = new Map();
+    prevRects: Map<number, DOMRect> = new Map();
+
+    constructor(props: TasksItemsInterface) {
         super(props);
     }
 
+
+    getCardRef = (index: number) => {
+        if (!this.cardRefs.has(index)) {
+            this.cardRefs.set(index, React.createRef<HTMLDivElement>());
+        }
+        return this.cardRefs.get(index)!;
+    };
 
     render(): React.ReactNode {
         return (
             <taskContext.Consumer>
                 {
                     value => {
-                        console.log('taskContext value: ', value)
                         return (
                             <div className="run-task">
                                 <header className="run-task-header">All current tasks</header>
                                 <div className="run-task-items">
                                     <div className="run-task-items-content">
                                         {
-                                            value.tasks === null || value.tasks.length === 0 ? (
-                                                <div className="run-task-items-content-empty">
-                                                    <p>There are currently no print tasks 😶</p>
-                                                </div>
-                                            ) : null
+                                            value.tasks && value.tasks.length > 0 ? (
+                                                value.tasks.map(task => (
+                                                    <TaskCard
+                                                        key={task.index}
+                                                        fileName={task.fileName}
+                                                        date={task.date}
+                                                        printerId={task.printerId}
+                                                        forwardedRef={this.getCardRef(task.index)}
+                                                        toClose={() => value.setPerndingTask(task.index)}
+                                                        className={value.tasks?.find(t => t.index === task.index)?.removing ? 'removing' : ''}
+                                                        index={task.index} onTransitionEnd={(e: React.TransitionEvent<HTMLDivElement>) => {
+                                                            // 只在 transform 动画结束时执行删除逻辑
+                                                            if (task.removing && e.propertyName === 'transform') {
+                                                                requestAnimationFrame(() => {
+                                                                    value.decreaseTasks(task.index);
+                                                                })
+                                                            }
+                                                        }}
+                                                    />
+                                                ))
+                                            ) :
+                                                (
+                                                    <div className="run-task-items-content-empty">
+                                                        <p>There are currently no print tasks 😶</p>
+                                                    </div>
+                                                )
                                         }
                                     </div>
                                 </div>
@@ -142,7 +219,7 @@ class OverCard extends React.Component<OverCardProps> {
                     <svg xmlns="http://www.w3.org/2000/svg" className="run-card-content-logo" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h168q13-36 43.5-58t68.5-22q38 0 68.5 22t43.5 58h168q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm80-80h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm200-190q13 0 21.5-8.5T510-820q0-13-8.5-21.5T480-850q-13 0-21.5 8.5T450-820q0 13 8.5 21.5T480-790ZM200-200v-560 560Z" /></svg>
                     <div className="run-card-content-text">
                         <header className="run-card-content-text-header">{this.props.fileName}</header>
-                        <footer className="run-card-content-text-footer">{this.props.date}</footer>
+                        <footer className="run-card-content-text-footer">{this.props.date.slice()}</footer>
                     </div>
                     <aside className="run-card-content-aside">
                         <p>Preview Code</p>
@@ -153,27 +230,30 @@ class OverCard extends React.Component<OverCardProps> {
     }
 }
 
+
+
 /**
  * OverItemds组件，显示所有已完成的任务
  * @returns {React.ReactNode} 返回一个包含已完成任务列表的JSX元素
  * 
  */
 class OverItemds extends React.Component<any, { animate: boolean }> {
+
     constructor(params: any) {
         super(params);
         this.state = {
             animate: false
         };
-
     }
 
     componentDidMount(): void {
         setTimeout(() => {
             this.setState({
                 animate: true
-            })
+            });
         }, 0);
     }
+
 
     render(): React.ReactNode {
         return (
@@ -245,10 +325,18 @@ class OverItemds extends React.Component<any, { animate: boolean }> {
 export default class Run extends React.Component {
     render(): React.ReactNode {
         return (
-            <div className="run">
-                <TaskItems />
-                <OverItemds />
-            </div>
+            <taskContext.Consumer>
+                {
+                    value => {
+                        return (
+                            <div className="run">
+                                <TaskItems tasks={value.tasks} />
+                                <OverItemds />
+                            </div>
+                        )
+                    }
+                }
+            </taskContext.Consumer>
         )
     }
 }

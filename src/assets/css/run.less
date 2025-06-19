@@ -95,6 +95,8 @@
     position: relative;
     user-select: none;
     margin: 20px auto;
+    transition: transform 0.5s ease, opacity 0.3s ease, height 0.5s ease;
+    will-change: transform, opacity;
     &-content {
       position: absolute;
       inset: 0 20px;
@@ -114,18 +116,22 @@
         fill: var(--text-color);
       }
       &-text {
-        flex-basis: 40%;
+        flex-basis: 55%;
         height: 100%;
         display: flex;
         flex-direction: column;
-
+        text-overflow: ellipsis;
+        overflow: hidden;
         &-header {
           flex-basis: 50%;
           width: 100%;
+          max-width: 100%;
           display: flex;
           align-items: center;
           color: var(--text-color);
           font-family: "robot-solid";
+          white-space: nowrap;
+          overflow: hidden;
         }
 
         &-footer {
@@ -136,11 +142,13 @@
           align-items: center;
           font-family: "robot-thin";
           color: var(--text-color);
+          white-space: nowrap;
+          overflow: hidden;
         }
       }
 
       &-aside {
-        flex-basis: 40%;
+        flex-basis: 30%;
         height: 100%;
         display: flex;
         justify-content: center;
@@ -148,6 +156,7 @@
         color: var(--text-color);
         font-family: "robot-solid";
         gap: 15px;
+        cursor: pointer;
         &-close {
           appearance: none;
           border: none;
@@ -166,7 +175,6 @@
   }
 }
 
-
 .over {
   transition: transform 0.3s ease-in-out, opacity 0.2s ease;
   transform: translateX(-150%);
@@ -177,4 +185,11 @@
   transition: transform 0.3s ease-in-out, opacity 0.2s ease;
   transform: translateX(0%);
   opacity: 1;
+}
+
+.run-card.removing {
+  transition: transform 0.5s ease, opacity 0.3s ease, height 0.3s linear;
+  transform: translateX(150%);
+  height: 0;
+  opacity: 0;
 }

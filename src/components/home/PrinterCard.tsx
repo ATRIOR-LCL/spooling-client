@@ -1,9 +1,9 @@
 import React from "react";
 import '../../assets/css/printer.less'
-import { taskContext } from "../../pages/HomePage";
-import { sleep } from "../../utils/sleep";
-import createUniqueRandomGenerator from "../../utils/getRandom";
+// import { taskContext } from "../../pages/HomePage";
+import { taskContext } from "../../context/taskContext";
 
+import axios from "axios";
 
 interface PrinterCardState {
     printerName: string;
@@ -61,7 +61,7 @@ class OperationItems extends React.Component<PrinterItemsProps> {
                 console.log(`队伍名称设置为: ${teamName}`);
                 this.props.setTeamName(teamName);
             } else {
-                this.props.setTeamName("未命名队伍");
+                this.props.setTeamName("Unknown Team");
             }
         }
     }
@@ -129,20 +129,85 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
             <taskContext.Consumer>
                 {
                     value => {
-                        const startPrinting = (e: MouseEvent) => {
-                            e.preventDefault();
-                            const tasksItems = document.querySelectorAll('.pending') as NodeListOf<HTMLElement>;
-                            const reqPromise = new Promise((resolve, reject) => {
-                                const timer = setInterval(() => {
-                                    const getRandom = createUniqueRandomGenerator(0, tasksItems.length - 1);
-                                    let randomNum = getRandom();
-                                    if (value.setPerndingTask(randomNum) == 0) {
-                                        value.clearPendingTask();
-                                        clearInterval(timer);
-                                        resolve(true);
+                        const startPrinting = async (event: any) => {
+                            event.preventDefault();
+                            if (value.tasks) {
+                                let taskList = await Promise.all(value.tasks.map(async (task) => {
+                                    const response = await axios.post('/api/print', {
+                                        priority: task.printerId,
+                                        team_name: task.teamName ? task.teamName : 'Unknown Team',
+                                        file_content: task.fileContent,
+                                        color: task.printerId === 3 ? true : false,
+                                    }, {
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        }
+                                    });
+                                    return response.data;
+                                }));
+                                taskList.forEach((data, index) => {
+                                    if (data.status === 'success') {
+                                        value.setWaitingTask(index, data.job_id, 'waiting');
+                                    } else {
+                                        value.setWaitingTask(index, data.job_id, 'faild');
+                                    }
+                                })
+                                let taskIdList = taskList.map(task => task.data.job_id);
+
+                                const intervalId = setInterval(async () => {
+                                    if (taskIdList.length === 0) {
+                                        clearInterval(intervalId);
+                                        console.log('所有任务处理完毕，已清除定时器。');
+                                        return;
+                                    }
+
+                                    const toRemove: number[] = [];
+
+                                    const res = await Promise.all(taskIdList.map(async (taskId) => {
+                                        try {
+                                            const response = await axios.post(`/api/get_job_info`, { id: taskId });
+                                            return { data: response.data, taskId };
+                                        } catch (error) {
+                                            console.error(`任务 ${taskId} 请求失败:`, error);
+                                            return null;
+                                        }
+                                    }));
+
+                                    res.forEach((result, index) => {
+                                        if (!result) return;
+
+                                        const { data, taskId } = result;
+                                        if (data.data.status === 'Waiting') {
+                                            value.setWaitingTask(index, data.job_id, 'waiting');
+                                        } else if (data.data.status === 'SubmitFailed') {
+                                            value.setWaitingTask(index, data.job_id, 'faild');
+                                            toRemove.push(taskId);
+                                        } else if (data.data.status === 'Completed') {
+                                            value.setWaitingTask(index, data.job_id, 'success');
+                                            value.setSuccessTasks({
+                                                fileContent: data.data.file_content,
+                                                fileName: data.data.file_name,
+                                                date: data.data.end_print_time,
+                                                printerId: data.data.priority,
+                                                teamName: data.data.team_name,
+                                            })
+                                            toRemove.push(taskId);
+                                        }
+                                        console.log(`任务 ${taskId} 状态:`, data.data.status);
+                                    });
+
+                                    // 更新任务列表
+                                    taskIdList = taskIdList.filter(id => !toRemove.includes(id));
+
+                                    // 如果任务全部处理完了，再次检查后清除定时器
+                                    if (taskIdList.length === 0) {
+                                        clearInterval(intervalId);
+                                        console.log('所有任务处理完毕，已清除定时器。');
                                     }
                                 }, 1000);
-                            })
+
+                                // taskList.forEach((data, index) => {
+                            }
                         }
                         return (
                             <div className="pt-operation-handle">
@@ -167,7 +232,7 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                 <form className="pt-operation-handle-form">
                                     <button className="pt-operation-handle-form-submit" disabled={
                                         value.tasks && value.tasks.length > 0 ? false : true
-                                    } onClick={(e) => startPrinting(e.nativeEvent)}>
+                                    } onClick={(e) => startPrinting(e)}>
                                         <p className="pt-operation-handle-form-submit-group">
                                             <span className="pt-operation-handle-form-submit-p">Start Printing !</span>
                                             <span className="pt-operation-handle-form-submit-p"><svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="48px" fill="#fff"><path d="m187-551 106 45q18-36 38.5-71t43.5-67l-79-16-109 109Zm154 81 133 133q57-26 107-59t81-64q81-81 119-166t41-192q-107 3-192 41T464-658q-31 31-64 81t-59 107Zm229-96q-20-20-20-49.5t20-49.5q20-20 49.5-20t49.5 20q20 20 20 49.5T669-566q-20 20-49.5 20T570-566Zm-15 383 109-109-16-79q-32 23-67 43.5T510-289l45 106Zm326-694q9 136-34 248T705-418l-2 2-2 2 22 110q3 15-1.5 29T706-250L535-78l-85-198-170-170-198-85 172-171q11-11 25-15.5t29-1.5l110 22q1-1 2-1.5t2-1.5q99-99 211-142.5T881-877ZM149-325q35-35 85.5-35.5T320-326q35 35 34.5 85.5T319-155q-26 26-80.5 43T75-80q15-109 31.5-164t42.5-81Zm42 43q-14 15-25 47t-19 82q50-8 82-19t47-25q19-17 19.5-42.5T278-284q-19-18-44.5-17.5T191-282Z" /></svg></span>

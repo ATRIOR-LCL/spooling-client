@@ -1,6 +1,7 @@
 import React from "react";
 import '../../assets/css/select.less'
-import { taskContext } from "../../pages/HomePage";
+// import { taskContext } from "../../pages/HomePage";
+import { taskContext } from "../../context/taskContext";
 
 interface SelectState {
     isPaste: boolean;
@@ -46,17 +47,19 @@ export default class Select extends React.Component<any, SelectState> {
             <taskContext.Consumer>
                 {
                     value => {
-                        const select = document.querySelector('.select') as HTMLDivElement;
-                        document.addEventListener('click', (e) => {
-                            const target = e.target as HTMLElement;
-                            const selectButton = document.querySelector('.pt-operation-handle-form') as HTMLDivElement;
-                            const selectPrinter = document.querySelector('.pt-operation-handle-select') as HTMLDivElement;
-                            if (!selectButton.contains(target) && !selectPrinter.contains(target) && !select.contains(target)) {
-                                select.style.transform = "translateX(-100%)";
-                                select.addEventListener('transitionend', () => {
-                                    value.closeSelect();
-                                })
-                            }
+                        requestAnimationFrame(() => {
+                            const select = document.querySelector('.select') as HTMLDivElement;
+                            document.addEventListener('click', (e) => {
+                                const target = e.target as HTMLElement;
+                                const selectButton = document.querySelector('.pt-operation-handle-form') as HTMLDivElement;
+                                const selectPrinter = document.querySelector('.pt-operation-handle-select') as HTMLDivElement;
+                                if (!selectButton.contains(target) && !selectPrinter.contains(target) && !select.contains(target)) {
+                                    select.style.transform = "translateX(-100%)";
+                                    select.addEventListener('transitionend', () => {
+                                        value.closeSelect();
+                                    })
+                                }
+                            })
                         })
                         const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, increase: Function) => {
                             const file = event.target.files?.[0];
@@ -73,10 +76,7 @@ export default class Select extends React.Component<any, SelectState> {
                                             _fileName,
                                             date,
                                             content as string, // Ensure content is treated as a string
-
                                         );
-                                        console.log(`Team name: ${this.props.teamName}`);
-                                        console.log(`File content: ${content}`);
 
                                         if (this.fileInputRef.current) {
                                             this.fileInputRef.current.value = "";
@@ -103,7 +103,7 @@ export default class Select extends React.Component<any, SelectState> {
                                         </header>
                                         <input type="text" className="select-paste-input-content" />
                                     </div>
-                                    <textarea onBlur={this.handlePaste} name="" id="" className="select-paste-content" style={{resize: 'none'}}></textarea>
+                                    <textarea onBlur={this.handlePaste} name="" id="" className="select-paste-content" style={{ resize: 'none' }}></textarea>
                                     <button className="select-paste-button" disabled={this.state.isPaste ? false : true} onClick={() => {
                                         const nowTime = new Date();
                                         value.increaseTasks(
