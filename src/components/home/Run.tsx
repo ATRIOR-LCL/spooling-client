@@ -89,7 +89,7 @@ export class TaskCard extends React.Component<TaskCardProps, TaskCardState> {
                                 </svg>
                             </button>
                         ) : status === 'waiting' ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" className="run-card-content-aside-close-logo" viewBox="0 -960 960 960" width="24px" fill="#ff1900">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" className="run-card-content-aside-close-logo run-card-content-aside-close-logo-waiting " viewBox="0 -960 960 960" width="24px" fill="#ff1900">
                                 <path d="M480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-155.5t86-127Q252-817 325-848.5T480-880q17 0 28.5 11.5T520-840q0 17-11.5 28.5T480-800q-133 0-226.5 93.5T160-480q0 133 93.5 226.5T480-160q133 0 226.5-93.5T800-480q0-17 11.5-28.5T840-520q17 0 28.5 11.5T880-480q0 82-31.5 155t-86 127.5q-54.5 54.5-127 86T480-80Z" />
                             </svg>
                         ) : (
@@ -184,9 +184,12 @@ interface OverCardProps {
     fileName: string;
     date: string;
     fileContent: string;
+    teamName: string;
+    printerId: number;
+    taskId?: number;
     transitionDelay: number;
     animate: boolean;
-    showCode: (fileContent: string) => void;
+    showCode: (fileName: string,fileContent: string, color: boolean, teamName: string, taskId?: number) => void;
 }
 
 /**
@@ -215,7 +218,7 @@ class OverCard extends React.Component<OverCardProps> {
     render(): React.ReactNode {
         return (
             <div className="run-card over" ref={this.overCardRef}>
-                <div className="run-card-content" onClick={() => this.props.showCode(this.props.fileContent)}>
+                <div className="run-card-content" onClick={() => this.props.showCode(this.props.fileName, this.props.fileContent, this.props.printerId === 3 ? true : false, this.props.teamName)}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="run-card-content-logo" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h168q13-36 43.5-58t68.5-22q38 0 68.5 22t43.5 58h168q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm80-80h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm200-190q13 0 21.5-8.5T510-820q0-13-8.5-21.5T480-850q-13 0-21.5 8.5T450-820q0 13 8.5 21.5T480-790ZM200-200v-560 560Z" /></svg>
                     <div className="run-card-content-text">
                         <header className="run-card-content-text-header">{this.props.fileName}</header>
@@ -254,6 +257,18 @@ class OverItemds extends React.Component<any, { animate: boolean }> {
         }, 0);
     }
 
+    private downLoadCodes = async () => {
+        const res = await fetch('/api/download_all').then(res => res.arrayBuffer());
+        const blob = new Blob([res]);
+        const Url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = Url;
+        a.download = "codes.zip";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(Url);
+    }
 
     render(): React.ReactNode {
         return (
@@ -272,7 +287,7 @@ class OverItemds extends React.Component<any, { animate: boolean }> {
                                         <button onClick={value.clearOverallTasks} disabled={disabled} className="run-task-buttons-clear">
                                             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--text-color)"><path d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z" /></svg>
                                         </button>
-                                        <button className="run-task-buttons-download" disabled={disabled}>
+                                        <button className="run-task-buttons-download" disabled={disabled} onClick={this.downLoadCodes}>
                                             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--text-color)"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" /></svg>
                                         </button>
                                     </div>
@@ -280,7 +295,18 @@ class OverItemds extends React.Component<any, { animate: boolean }> {
                                         {
                                             value.successTasks && value.successTasks.length > 0 ? (
                                                 value.successTasks.map((item, index) => {
-                                                    return <OverCard animate={this.state.animate} transitionDelay={index} showCode={() => value.showCode(item.fileContent, item.printerId === 3 ? true : false)} key={index} fileName={item.fileName} date={item.date} fileContent={item.fileContent} />
+                                                    return <OverCard
+                                                        animate={this.state.animate}
+                                                        transitionDelay={index}
+                                                        showCode={() => value.showCode(item.fileName, item.fileContent, item.printerId === 3 ? true : false, item.teamName, item.taskId)}
+                                                        key={index}
+                                                        fileName={item.fileName}
+                                                        date={item.date}
+                                                        fileContent={item.fileContent}
+                                                        teamName={item.teamName}
+                                                        printerId={item.printerId}
+                                                        taskId={item.taskId}
+                                                    />
                                                 })
                                             ) : (
                                                 <div className="run-task-items-content-empty">

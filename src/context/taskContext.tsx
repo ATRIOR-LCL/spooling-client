@@ -9,7 +9,7 @@ interface TaskContextType {
     currentTeamName: string;
     increaseTasks: (printerId: number, fileName: string, date: string, fileContent: string, teamName: string) => void;
     decreaseTasks: (index: number) => void;
-    showCode: (fileContent: string, color: boolean) => void;
+    showCode: (fileName: string, fileContent: string, color: boolean, teamName: string, taskId?: number) => void;
     setPerndingTask: (index: number) => number;
     setSuccessTasks: (obj: SuccessTaskType) => void;
     setFaildTasks: (printerId: number, fileName: string, date: string, fileContent: string, teamName: string) => void;

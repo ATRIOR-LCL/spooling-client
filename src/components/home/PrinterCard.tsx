@@ -78,9 +78,9 @@ class OperationItems extends React.Component<PrinterItemsProps> {
                         <main className="pt-operation-item-content-body">
                             <p>Serial Number：**** **** {this.props.seriesalNumber}</p>
                             <aside className="pt-operation-item-content-body-aside">
-                                <p>East A Zone：</p>
+                                <p>East A Zone:</p>
                                 <input type="text" placeholder="请输入队伍名称" onBlur={this.handleInputBlur} ref={this.inputRef} className="pt-operation-item-content-body-aside-team" />
-                                <p><svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" fill="#fefefe"><path d="M360-266h230q14 0 23.5-6t16.5-18l78-182q2-5 3.5-15t1.5-15v-24q0-14-6.5-20.5T686-553H472l29-138q2-8 0-15t-7-12l-21-22-161 174-8 16q-4 8-4 17v207q0 23 18 41.5t42 18.5ZM480-80q-82 0-155-31.5t-127.5-86Q143-252 111.5-325T80-480q0-83 31.5-156t86-127Q252-817 325-848.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 82-31.5 155T763-197.5q-54 54.5-127 86T480-80Zm0-60q142 0 241-99.5T820-480q0-142-99-241t-241-99q-141 0-240.5 99T140-480q0 141 99.5 240.5T480-140Zm0-340Z" /></svg></p>
+                                <p><svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" fill="#fff"><path d="M0-240v-53q0-38.57 41.5-62.78Q83-380 150.38-380q12.16 0 23.39.5t22.23 2.15q-8 17.35-12 35.17-4 17.81-4 37.18v65H0Zm240 0v-65q0-32 17.5-58.5T307-410q32-20 76.5-30t96.5-10q53 0 97.5 10t76.5 30q32 20 49 46.5t17 58.5v65H240Zm540 0v-65q0-19.86-3.5-37.43T765-377.27q11-1.73 22.17-2.23 11.17-.5 22.83-.5 67.5 0 108.75 23.77T960-293v53H780Zm-480-60h360v-6q0-37-50.5-60.5T480-390q-79 0-129.5 23.5T300-305v5ZM149.57-410q-28.57 0-49.07-20.56Q80-451.13 80-480q0-29 20.56-49.5Q121.13-550 150-550q29 0 49.5 20.5t20.5 49.93q0 28.57-20.5 49.07T149.57-410Zm660 0q-28.57 0-49.07-20.56Q740-451.13 740-480q0-29 20.56-49.5Q781.13-550 810-550q29 0 49.5 20.5t20.5 49.93q0 28.57-20.5 49.07T809.57-410ZM480-480q-50 0-85-35t-35-85q0-51 35-85.5t85-34.5q51 0 85.5 34.5T600-600q0 50-34.5 85T480-480Zm.35-60Q506-540 523-557.35t17-43Q540-626 522.85-643t-42.5-17q-25.35 0-42.85 17.15t-17.5 42.5q0 25.35 17.35 42.85t43 17.5ZM480-300Zm0-300Z"/></svg></p>
                             </aside>
                         </main>
                         <footer className="pt-operation-item-content-foot">
@@ -138,25 +138,48 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                         team_name: task.teamName ? task.teamName : 'Unknown Team',
                                         file_content: task.fileContent,
                                         color: task.printerId === 3 ? true : false,
+                                        problem_name: task.fileName
                                     }, {
                                         headers: {
                                             'Content-Type': 'application/json',
                                         }
                                     });
-                                    return response.data;
+                                    return { ...response.data, taskIndex: task.index }; // 保存原始任务索引
                                 }));
-                                taskList.forEach((data, index) => {
+
+                                // 创建任务ID到任务索引的映射
+                                const taskIdToIndexMap = new Map<number, number>();
+                                
+                                // 收集所有正在工作的打印机ID
+                                const workingPrinterIds = new Set<number>();
+
+                                taskList.forEach((data) => {
                                     if (data.status === 'success') {
-                                        value.setWaitingTask(index, data.job_id, 'waiting');
+                                        value.setWaitingTask(data.taskIndex, data.job_id, 'waiting');
+                                        taskIdToIndexMap.set(data.data.job_id, data.taskIndex);
+                                        
+                                        // 添加打印机ID到工作列表
+                                        const task = value.tasks?.find(t => t.index === data.taskIndex);
+                                        if (task) {
+                                            workingPrinterIds.add(task.printerId);
+                                        }
                                     } else {
-                                        value.setWaitingTask(index, data.job_id, 'faild');
+                                        value.setWaitingTask(data.taskIndex, data.job_id, 'faild');
+                                        value.setFaildTasks(data.priority, data.problem_name, data.end_print_time, data.file_content, data.team_name);
                                     }
                                 })
+                                
+                                // 设置工作打印机列表
+                                if (workingPrinterIds.size > 0) {
+                                    value.setWorkingPrinters(Array.from(workingPrinterIds));
+                                }
+                                
                                 let taskIdList = taskList.map(task => task.data.job_id);
 
                                 const intervalId = setInterval(async () => {
                                     if (taskIdList.length === 0) {
                                         clearInterval(intervalId);
+                                        value.clearWorkingPrinters(); // 清除工作打印机列表
                                         console.log('所有任务处理完毕，已清除定时器。');
                                         return;
                                     }
@@ -173,23 +196,33 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                         }
                                     }));
 
-                                    res.forEach((result, index) => {
+                                    res.forEach((result) => {
                                         if (!result) return;
 
                                         const { data, taskId } = result;
+                                        const taskIndex = taskIdToIndexMap.get(taskId);
+
+                                        if (taskIndex === undefined) {
+                                            console.warn(`找不到任务ID ${taskId} 对应的索引`);
+                                            return;
+                                        }
+
                                         if (data.data.status === 'Waiting') {
-                                            value.setWaitingTask(index, data.job_id, 'waiting');
+                                            value.setWaitingTask(taskIndex, data.job_id, 'waiting');
                                         } else if (data.data.status === 'SubmitFailed') {
-                                            value.setWaitingTask(index, data.job_id, 'faild');
+                                            value.setWaitingTask(taskIndex, data.job_id, 'faild');
                                             toRemove.push(taskId);
                                         } else if (data.data.status === 'Completed') {
-                                            value.setWaitingTask(index, data.job_id, 'success');
+                                            console.log('Completed task data:', data.data);
+                                            console.log('team_name from server:', data.data.team_name);
+                                            value.setWaitingTask(taskIndex, data.job_id, 'success');
                                             value.setSuccessTasks({
                                                 fileContent: data.data.file_content,
-                                                fileName: data.data.file_name,
+                                                fileName: data.data.problem_name,
                                                 date: data.data.end_print_time,
                                                 printerId: data.data.priority,
                                                 teamName: data.data.team_name,
+                                                taskId: data.data.job_id
                                             })
                                             toRemove.push(taskId);
                                         }
@@ -202,11 +235,10 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                     // 如果任务全部处理完了，再次检查后清除定时器
                                     if (taskIdList.length === 0) {
                                         clearInterval(intervalId);
+                                        value.clearWorkingPrinters(); // 清除工作打印机列表
                                         console.log('所有任务处理完毕，已清除定时器。');
                                     }
                                 }, 1000);
-
-                                // taskList.forEach((data, index) => {
                             }
                         }
                         return (
@@ -344,7 +376,7 @@ export default class PrinterCard extends React.Component<any, PrinterCardState> 
         this.state = {
             printerName: "Printer - 1",
             printerId: 1,
-            printerSerialNumber: 5500,
+            printerSerialNumber: 5501,
             printerStatus: "Pending",
             color: false,
             teamName: "未命名队伍",

@@ -1,6 +1,5 @@
 import React from "react";
 import '../../assets/css/select.less'
-// import { taskContext } from "../../pages/HomePage";
 import { taskContext } from "../../context/taskContext";
 
 interface SelectState {
@@ -53,7 +52,8 @@ export default class Select extends React.Component<any, SelectState> {
                                 const target = e.target as HTMLElement;
                                 const selectButton = document.querySelector('.pt-operation-handle-form') as HTMLDivElement;
                                 const selectPrinter = document.querySelector('.pt-operation-handle-select') as HTMLDivElement;
-                                if (!selectButton.contains(target) && !selectPrinter.contains(target) && !select.contains(target)) {
+                                const PrinterCard = document.querySelector('.pt-operation-items') as HTMLDivElement;
+                                if (!selectButton.contains(target) && !selectPrinter.contains(target) && !select.contains(target) && !PrinterCard.contains(target)) {
                                     select.style.transform = "translateX(-100%)";
                                     select.addEventListener('transitionend', () => {
                                         value.closeSelect();

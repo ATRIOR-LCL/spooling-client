@@ -168,6 +168,18 @@
           cursor: pointer;
           &-logo {
             fill: rgb(255, 77, 77);
+
+            &-waiting {
+              animation: waiting-loading 1s ease-in-out infinite;
+              @keyframes waiting-loading {
+                from {
+                  transform: rotate(0deg);
+                }
+                to {
+                  transform: rotate(360deg);
+                }
+              }
+            }
           }
         }
       }

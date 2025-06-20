@@ -29,8 +29,11 @@ interface HomePageState {
     tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string, index: number, removing: boolean, taskId?: number, state: string }> | null;
     workingPrinters: Array<number> | null;
     currentCode: {
+        fileName: string | null; // 添加 fileName 字段
         content: string | null;
         color: boolean;
+        teamName: string;
+        taskId?: number; // 添加 taskId 字段
     },
     isSelecting: boolean;
     currentPrinter: number;
@@ -46,6 +49,7 @@ export interface SuccessTaskType {
     date: string;
     fileContent: string;
     teamName: string;
+    taskId?: number;
 }
 
 
@@ -97,8 +101,11 @@ class HomePage extends React.Component<any, HomePageState> {
         this.state = {
             tasks: null,
             currentCode: {
+                fileName: null,
                 content: null,
-                color: false
+                color: false,
+                teamName: 'Unknown Team',
+                taskId: undefined
             },
             workingPrinters: null,
             currentTeamName: 'Unknown Team',
@@ -114,6 +121,7 @@ class HomePage extends React.Component<any, HomePageState> {
      * @see {@link setPendingTask}
      */
     private increaseTasks = (printerId: number, fileName: string, date: string, fileContent: string, teamName: string = this.state.currentTeamName): void => {
+        console.log('increaseTasks called with teamName:', teamName, 'currentTeamName:', this.state.currentTeamName);
         this.setState(prevState => {
             const _index = prevState.tasks ? prevState.tasks.length : 0;
             return {
@@ -130,11 +138,15 @@ class HomePage extends React.Component<any, HomePageState> {
         })
     }
 
-    private showCode = (fileContent: string, color: boolean): void => {
+    private showCode = (fileName: string , fileContent: string, color: boolean, teamName: string, taskId?: number): void => {
+        console.log('showCode called with teamName:', teamName, 'taskId:', taskId);
         this.setState({
             currentCode: {
+                fileName: fileName,
                 content: fileContent,
-                color: color
+                color: color,
+                teamName: teamName,
+                taskId: taskId
             },
         });
     }
@@ -142,8 +154,11 @@ class HomePage extends React.Component<any, HomePageState> {
     private closeCode = (): void => {
         this.setState({
             currentCode: {
+                fileName: null,
                 content: null,
-                color: false
+                color: false,
+                teamName: 'Unknown Team',
+                taskId: undefined
             }
         });
     }
@@ -171,8 +186,11 @@ class HomePage extends React.Component<any, HomePageState> {
             faildTasks: null,
             workingPrinters: null,
             currentCode: {
+                fileName: 'Unname File', // 重置 fileName 字段
                 content: null,
-                color: false
+                color: false,
+                teamName: 'Unknown Team',
+                taskId: undefined
             },
             currentTeamName: 'Unknown Team',
         });
@@ -296,8 +314,8 @@ class HomePage extends React.Component<any, HomePageState> {
                             : null
                     }
                     {
-                        this.state.currentCode.content
-                            ? <Code code={this.state.currentCode.content} color={this.state.currentCode.color} teamName={this.state.currentTeamName} closeCode={this.closeCode} />
+                        this.state.currentCode.content && this.state.currentCode.fileName
+                            ? <Code fileName={this.state.currentCode.fileName} code={this.state.currentCode.content} color={this.state.currentCode.color} teamName={this.state.currentCode.teamName} taskId={this.state.currentCode.taskId} closeCode={this.closeCode} />
                             : null
                     }
                     <main className="home-main">
