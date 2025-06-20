@@ -5,6 +5,8 @@ import Run from "../components/home/Run";
 import Code from "../components/ui/Code";
 import Select from "../components/ui/Select";
 import { taskContext } from "../context/taskContext";
+import PrinterTip from "../components/ui/PrinterTip";
+
 class ErrorBoundary extends React.Component {
     state = { hasError: false };
 
@@ -357,6 +359,7 @@ class HomePage extends React.Component<any, HomePageState> {
                             ? <Code fileName={this.state.currentCode.fileName} code={this.state.currentCode.content} color={this.state.currentCode.color} teamName={this.state.currentCode.teamName} taskId={this.state.currentCode.taskId} closeCode={this.closeCode} />
                             : null
                     }
+                    <PrinterTip printerId={this.state.currentPrinter} />
                     <main className="home-main">
                         <section className="home-main-section">
                             <PrinterCard />
