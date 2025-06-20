@@ -2,7 +2,7 @@ import React from 'react';
 import { type SuccessTaskType } from '../pages/HomePage';
 
 interface TaskContextType {
-    tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string, index: number, removing: boolean, taskId?: number, state: string, }> | null;
+    tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string, index: number, removing: boolean, taskId?: number | null, state: string, }> | null;
     successTasks: Array<SuccessTaskType> | null;
     workingPrinters: Array<number> | null;
     currentPrinter: number;
@@ -17,13 +17,16 @@ interface TaskContextType {
     getFaildTasksNumber: (printerId: number) => number;
     setWorkingPrinters: (workingPrinters: Array<number>) => void;
     clearWorkingPrinters: () => void;
+    setPrinterWorking: (printerId: number) => void;
+    setPrinterPending: (printerId: number) => void;
+    isPrinterWorking: (printerId: number) => boolean;
     clearOverallTasks: () => void;
     setCurrentPrinter: (printerId: number) => void;
     toSelect: () => void;
     closeSelect: () => void;
     setTeamName: (teamName: string) => void;
     clearPendingTask: () => void; // 可选方法，用于清除待处理任务
-    setWaitingTask: (index: number, taskId: number, state: string) => void; // 可选方法，用于设置等待任务状态
+    setWaitingTask: (index: number, taskId: number | null, state: string) => void; // 可选方法，用于设置等待任务状态
 }
 export const taskContext = React.createContext<TaskContextType>({
     tasks: null,
@@ -41,6 +44,9 @@ export const taskContext = React.createContext<TaskContextType>({
     getFaildTasksNumber: () => 0,
     setWorkingPrinters: () => { },
     clearWorkingPrinters: () => { },
+    setPrinterWorking: () => { },
+    setPrinterPending: () => { },
+    isPrinterWorking: () => false,
     clearOverallTasks: () => { },
     setCurrentPrinter: () => { },
     toSelect: () => { },

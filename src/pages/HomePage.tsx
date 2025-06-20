@@ -26,7 +26,7 @@ class ErrorBoundary extends React.Component {
 }
 
 interface HomePageState {
-    tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string, index: number, removing: boolean, taskId?: number, state: string }> | null;
+    tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string, index: number, removing: boolean, taskId?: number | null, state: string }> | null;
     workingPrinters: Array<number> | null;
     currentCode: {
         fileName: string | null; // 添加 fileName 字段
@@ -267,7 +267,7 @@ class HomePage extends React.Component<any, HomePageState> {
         });
     }
 
-    private setWaitingTask = (index: number, taskId: number, state: string) => {
+    private setWaitingTask = (index: number, taskId: number | null, state: string) => {
         this.setState(prevState => ({
             tasks: prevState.tasks
                 ? prevState.tasks.map(task =>
@@ -275,6 +275,42 @@ class HomePage extends React.Component<any, HomePageState> {
                 )
                 : null
         }));
+    }
+
+    /**
+     * 设置指定打印机为工作状态
+     */
+    private setPrinterWorking = (printerId: number): void => {
+        this.setState(prevState => ({
+            workingPrinters: prevState.workingPrinters
+                ? (prevState.workingPrinters.includes(printerId) 
+                    ? prevState.workingPrinters 
+                    : [...prevState.workingPrinters, printerId])
+                : [printerId]
+        }));
+    }
+
+    /**
+     * 设置指定打印机为等待状态（从工作列表中移除）
+     */
+    private setPrinterPending = (printerId: number): void => {
+        this.setState(prevState => ({
+            workingPrinters: prevState.workingPrinters
+                ? prevState.workingPrinters.filter(id => id !== printerId)
+                : null
+        }));
+    }
+
+    /**
+     * 检查指定打印机是否正在工作
+     */
+    private isPrinterWorking = (printerId: number): boolean => {
+        // 只有当打印机有 waiting 状态的任务时才认为是 Running
+        // pending 状态表示任务还未开始打印，打印机应该显示为 Pending
+        const hasWaitingTasks = (this.state.tasks || []).some(task => 
+            task.printerId === printerId && task.state === 'waiting'
+        );
+        return hasWaitingTasks;
     }
 
 
@@ -298,6 +334,9 @@ class HomePage extends React.Component<any, HomePageState> {
                         getFaildTasksNumber: this.getFaildTasksNumber,
                         setWorkingPrinters: this.setWorkingPrinters,
                         clearWorkingPrinters: this.clearWorkingPrinters,
+                        setPrinterWorking: this.setPrinterWorking,
+                        setPrinterPending: this.setPrinterPending,
+                        isPrinterWorking: this.isPrinterWorking,
                         clearOverallTasks: this.clearOverallTasks,
                         setCurrentPrinter: this.setCurrentPrinter,
                         toSelect: this.toSelect,

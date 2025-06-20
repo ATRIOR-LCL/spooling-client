@@ -80,7 +80,7 @@ class OperationItems extends React.Component<PrinterItemsProps> {
                             <aside className="pt-operation-item-content-body-aside">
                                 <p>East A Zone:</p>
                                 <input type="text" placeholder="请输入队伍名称" onBlur={this.handleInputBlur} ref={this.inputRef} className="pt-operation-item-content-body-aside-team" />
-                                <p><svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" fill="#fff"><path d="M0-240v-53q0-38.57 41.5-62.78Q83-380 150.38-380q12.16 0 23.39.5t22.23 2.15q-8 17.35-12 35.17-4 17.81-4 37.18v65H0Zm240 0v-65q0-32 17.5-58.5T307-410q32-20 76.5-30t96.5-10q53 0 97.5 10t76.5 30q32 20 49 46.5t17 58.5v65H240Zm540 0v-65q0-19.86-3.5-37.43T765-377.27q11-1.73 22.17-2.23 11.17-.5 22.83-.5 67.5 0 108.75 23.77T960-293v53H780Zm-480-60h360v-6q0-37-50.5-60.5T480-390q-79 0-129.5 23.5T300-305v5ZM149.57-410q-28.57 0-49.07-20.56Q80-451.13 80-480q0-29 20.56-49.5Q121.13-550 150-550q29 0 49.5 20.5t20.5 49.93q0 28.57-20.5 49.07T149.57-410Zm660 0q-28.57 0-49.07-20.56Q740-451.13 740-480q0-29 20.56-49.5Q781.13-550 810-550q29 0 49.5 20.5t20.5 49.93q0 28.57-20.5 49.07T809.57-410ZM480-480q-50 0-85-35t-35-85q0-51 35-85.5t85-34.5q51 0 85.5 34.5T600-600q0 50-34.5 85T480-480Zm.35-60Q506-540 523-557.35t17-43Q540-626 522.85-643t-42.5-17q-25.35 0-42.85 17.15t-17.5 42.5q0 25.35 17.35 42.85t43 17.5ZM480-300Zm0-300Z"/></svg></p>
+                                <p><svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" fill="#fff"><path d="M0-240v-53q0-38.57 41.5-62.78Q83-380 150.38-380q12.16 0 23.39.5t22.23 2.15q-8 17.35-12 35.17-4 17.81-4 37.18v65H0Zm240 0v-65q0-32 17.5-58.5T307-410q32-20 76.5-30t96.5-10q53 0 97.5 10t76.5 30q32 20 49 46.5t17 58.5v65H240Zm540 0v-65q0-19.86-3.5-37.43T765-377.27q11-1.73 22.17-2.23 11.17-.5 22.83-.5 67.5 0 108.75 23.77T960-293v53H780Zm-480-60h360v-6q0-37-50.5-60.5T480-390q-79 0-129.5 23.5T300-305v5ZM149.57-410q-28.57 0-49.07-20.56Q80-451.13 80-480q0-29 20.56-49.5Q121.13-550 150-550q29 0 49.5 20.5t20.5 49.93q0 28.57-20.5 49.07T149.57-410Zm660 0q-28.57 0-49.07-20.56Q740-451.13 740-480q0-29 20.56-49.5Q781.13-550 810-550q29 0 49.5 20.5t20.5 49.93q0 28.57-20.5 49.07T809.57-410ZM480-480q-50 0-85-35t-35-85q0-51 35-85.5t85-34.5q51 0 85.5 34.5T600-600q0 50-34.5 85T480-480Zm.35-60Q506-540 523-557.35t17-43Q540-626 522.85-643t-42.5-17q-25.35 0-42.85 17.15t-17.5 42.5q0 25.35 17.35 42.85t43 17.5ZM480-300Zm0-300Z" /></svg></p>
                             </aside>
                         </main>
                         <footer className="pt-operation-item-content-foot">
@@ -132,111 +132,204 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                         const startPrinting = async (event: any) => {
                             event.preventDefault();
                             if (value.tasks) {
-                                let taskList = await Promise.all(value.tasks.map(async (task) => {
-                                    const response = await axios.post('/api/print', {
-                                        priority: task.printerId,
-                                        team_name: task.teamName ? task.teamName : 'Unknown Team',
-                                        file_content: task.fileContent,
-                                        color: task.printerId === 3 ? true : false,
-                                        problem_name: task.fileName
-                                    }, {
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        }
-                                    });
-                                    return { ...response.data, taskIndex: task.index }; // 保存原始任务索引
+                                // 立即将所有任务状态设置为 waiting，提供即时反馈
+                                console.log('开始打印，立即设置所有任务状态为 waiting');
+                                value.tasks.forEach((task) => {
+                                    value.setWaitingTask(task.index, null, 'waiting');
+                                    console.log(`任务 ${task.index} 状态立即设置为 waiting`);
+                                });
+
+                                // 使用 Promise.allSettled 确保单个任务失败不影响其他任务
+                                const taskResults = await Promise.allSettled(value.tasks.map(async (task) => {
+                                    try {
+                                        const response = await axios.post('/api/print', {
+                                            priority: task.printerId,
+                                            team_name: task.teamName ? task.teamName : 'Unknown Team',
+                                            file_content: task.fileContent,
+                                            color: task.printerId === 3 ? true : false,
+                                            problem_name: task.fileName
+                                        }, {
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            }
+                                        });
+                                        console.log(`任务 ${task.index} HTTP 200 响应:`, response.data);
+                                        return { ...response.data, taskIndex: task.index }; // 保存原始任务索引
+                                    }
+                                    catch (error) {
+                                        console.error(`打印任务 ${task.index} 请求失败:`, error);
+                                        // 直接返回失败任务对象，不要抛出错误
+                                        return { 
+                                            status: 'faild', 
+                                            taskIndex: task.index, 
+                                            job_id: null, 
+                                            data: {
+                                                problem_name: task.fileName, 
+                                                end_print_time: new Date().toISOString(), 
+                                                file_content: task.fileContent, 
+                                                team_name: task.teamName,
+                                                priority: task.printerId
+                                            }
+                                        };
+                                    }
                                 }));
+
+                                // 处理每个任务的结果
+                                const taskList: any[] = [];
+                                taskResults.forEach((result) => {
+                                    if (result.status === 'fulfilled') {
+                                        // 所有任务都应该是 fulfilled，包括成功和失败的
+                                        taskList.push(result.value);
+                                    } else {
+                                        // 这种情况理论上不应该发生，但为了安全起见保留
+                                        console.error('意外的 rejected 状态:', result.reason);
+                                    }
+                                });
 
                                 // 创建任务ID到任务索引的映射
                                 const taskIdToIndexMap = new Map<number, number>();
-                                
-                                // 收集所有正在工作的打印机ID
-                                const workingPrinterIds = new Set<number>();
 
                                 taskList.forEach((data) => {
-                                    if (data.status === 'success') {
-                                        value.setWaitingTask(data.taskIndex, data.job_id, 'waiting');
-                                        taskIdToIndexMap.set(data.data.job_id, data.taskIndex);
-                                        
-                                        // 添加打印机ID到工作列表
-                                        const task = value.tasks?.find(t => t.index === data.taskIndex);
-                                        if (task) {
-                                            workingPrinterIds.add(task.printerId);
-                                        }
-                                    } else {
-                                        value.setWaitingTask(data.taskIndex, data.job_id, 'faild');
-                                        value.setFaildTasks(data.priority, data.problem_name, data.end_print_time, data.file_content, data.team_name);
-                                    }
-                                })
-                                
-                                // 设置工作打印机列表
-                                if (workingPrinterIds.size > 0) {
-                                    value.setWorkingPrinters(Array.from(workingPrinterIds));
-                                }
-                                
-                                let taskIdList = taskList.map(task => task.data.job_id);
-
-                                const intervalId = setInterval(async () => {
-                                    if (taskIdList.length === 0) {
-                                        clearInterval(intervalId);
-                                        value.clearWorkingPrinters(); // 清除工作打印机列表
-                                        console.log('所有任务处理完毕，已清除定时器。');
+                                    // 检查 data 是否为 null（异常情况）
+                                    if (!data) {
+                                        console.warn('跳过空的任务数据');
                                         return;
                                     }
-
-                                    const toRemove: number[] = [];
-
-                                    const res = await Promise.all(taskIdList.map(async (taskId) => {
-                                        try {
-                                            const response = await axios.post(`/api/get_job_info`, { id: taskId });
-                                            return { data: response.data, taskId };
-                                        } catch (error) {
-                                            console.error(`任务 ${taskId} 请求失败:`, error);
-                                            return null;
+                                    
+                                    console.log(`处理任务 ${data.taskIndex}:`, {
+                                        status: data.status,
+                                        job_id: data.data?.job_id,
+                                        hasData: !!data.data
+                                    });
+                                    
+                                    if (data.status === 'success' && data.data?.job_id != null) {
+                                        // 成功的任务：更新 job_id 并添加到轮询映射中，保持 waiting 状态
+                                        console.log(`任务 ${data.taskIndex} 请求成功，添加到轮询列表，job_id: ${data.data.job_id}`);
+                                        value.setWaitingTask(data.taskIndex, data.data.job_id, 'waiting');
+                                        taskIdToIndexMap.set(data.data.job_id, data.taskIndex);
+                                    } else if (data.status === 'faild') {
+                                        // 失败的任务：立即设置为 faild 状态
+                                        console.log(`任务 ${data.taskIndex} 请求失败，设置为 faild 状态`);
+                                        value.setWaitingTask(data.taskIndex, null, 'faild');
+                                        value.setFaildTasks(
+                                            data.data.priority, 
+                                            data.data.problem_name, 
+                                            data.data.end_print_time, 
+                                            data.data.file_content, 
+                                            data.data.team_name
+                                        );
+                                    } else {
+                                        // 其他异常情况：设置为 faild 状态
+                                        console.log(`任务 ${data.taskIndex} 其他异常情况，设置为 faild:`, { status: data.status, job_id: data.data?.job_id });
+                                        value.setWaitingTask(data.taskIndex, null, 'faild');
+                                        if (data.data) {
+                                            value.setFaildTasks(data.data.priority, data.data.problem_name, data.data.end_print_time, data.data.file_content, data.data.team_name);
                                         }
-                                    }));
+                                    }
+                                })
 
-                                    res.forEach((result) => {
-                                        if (!result) return;
+                                // 只收集有效的任务ID，过滤掉异常任务（job_id 为 null 或 undefined）
+                                let taskIdList = taskList
+                                    .filter(task => task && task.data?.job_id != null) // 过滤掉异常任务
+                                    .map(task => task.data.job_id);
 
-                                        const { data, taskId } = result;
-                                        const taskIndex = taskIdToIndexMap.get(taskId);
-
-                                        if (taskIndex === undefined) {
-                                            console.warn(`找不到任务ID ${taskId} 对应的索引`);
+                                const intervalId = setInterval(async () => {
+                                    try {
+                                        if (taskIdList.length === 0) {
+                                            clearInterval(intervalId);
+                                            value.clearWorkingPrinters(); // 清除工作打印机列表
+                                            console.log('所有任务处理完毕，已清除定时器。');
                                             return;
                                         }
 
-                                        if (data.data.status === 'Waiting') {
-                                            value.setWaitingTask(taskIndex, data.job_id, 'waiting');
-                                        } else if (data.data.status === 'SubmitFailed') {
-                                            value.setWaitingTask(taskIndex, data.job_id, 'faild');
-                                            toRemove.push(taskId);
-                                        } else if (data.data.status === 'Completed') {
-                                            console.log('Completed task data:', data.data);
-                                            console.log('team_name from server:', data.data.team_name);
-                                            value.setWaitingTask(taskIndex, data.job_id, 'success');
-                                            value.setSuccessTasks({
-                                                fileContent: data.data.file_content,
-                                                fileName: data.data.problem_name,
-                                                date: data.data.end_print_time,
-                                                printerId: data.data.priority,
-                                                teamName: data.data.team_name,
-                                                taskId: data.data.job_id
-                                            })
-                                            toRemove.push(taskId);
+                                        const toRemove: number[] = [];
+                                        const printerTaskCount = new Map<number, number>(); // 跟踪每台打印机的待处理任务数
+
+                                        // 使用 Promise.allSettled 而不是 Promise.all，确保单个请求异常不影响其他请求
+                                        const results = await Promise.allSettled(taskIdList.map(async (taskId) => {
+                                            // 额外检查确保 taskId 有效
+                                            if (taskId == null || taskId === undefined) {
+                                                console.warn(`跳过无效的任务ID: ${taskId}`);
+                                                throw new Error(`无效的任务ID: ${taskId}`);
+                                            }
+                                            
+                                            try {
+                                                const response = await axios.post(`/api/get_job_info`, { id: taskId });
+                                                return { data: response.data, taskId };
+                                            } catch (error) {
+                                                console.error(`任务 ${taskId} 请求失败:`, error);
+                                                // 对于轮询阶段的异常，我们不需要标记为 failed，因为可能是网络临时问题
+                                                // 只抛出错误，让 Promise.allSettled 处理
+                                                throw error;
+                                            }
+                                        }));
+
+                                        // 处理每个请求的结果，不管其他请求是否成功
+                                        results.forEach((result, index) => {
+                                            const taskId = taskIdList[index];
+                                            
+                                            if (result.status === 'rejected') {
+                                                console.error(`任务 ${taskId} 轮询失败:`, result.reason);
+                                                // 对于轮询阶段的失败，我们可以选择重试或者暂时跳过
+                                                // 这里我们暂时跳过，不将其标记为 failed
+                                                return;
+                                            }
+
+                                            const { data, taskId: resultTaskId } = result.value;
+                                            const taskIndex = taskIdToIndexMap.get(resultTaskId);
+
+                                            if (taskIndex === undefined) {
+                                                console.warn(`找不到任务ID ${resultTaskId} 对应的索引`);
+                                                return;
+                                            }
+
+                                            // 找到对应的任务以获取打印机ID
+                                            const task = value.tasks?.find(t => t.index === taskIndex);
+                                            const printerId = task?.printerId;
+
+                                            try {
+                                                if (data.data.status === 'Waiting') {
+                                                    value.setWaitingTask(taskIndex, data.job_id, 'waiting');
+                                                    // 统计该打印机的待处理任务
+                                                    if (printerId) {
+                                                        printerTaskCount.set(printerId, (printerTaskCount.get(printerId) || 0) + 1);
+                                                    }
+                                                } else if (data.data.status === 'SubmitFailed') {
+                                                    value.setWaitingTask(taskIndex, data.job_id, 'faild');
+                                                    toRemove.push(resultTaskId);
+                                                } else if (data.data.status === 'Completed') {
+                                                    console.log('Completed task data:', data.data);
+                                                    console.log('team_name from server:', data.data.team_name);
+                                                    value.setWaitingTask(taskIndex, data.job_id, 'success');
+                                                    value.setSuccessTasks({
+                                                        fileContent: data.data.file_content,
+                                                        fileName: data.data.problem_name,
+                                                        date: data.data.end_print_time || new Date().toISOString(),
+                                                        printerId: data.data.priority,
+                                                        teamName: data.data.team_name || 'Unknown Team',
+                                                        taskId: data.data.job_id
+                                                    })
+                                                    toRemove.push(resultTaskId);
+                                                }
+                                                console.log(`任务 ${resultTaskId} 状态:`, data.data.status);
+                                            } catch (statusError) {
+                                                console.error(`处理任务 ${resultTaskId} 状态时出错:`, statusError);
+                                                // 即使状态处理出错，也不影响其他任务的处理
+                                            }
+                                        });
+
+                                        // 更新任务列表
+                                        taskIdList = taskIdList.filter(id => !toRemove.includes(id));
+
+                                        // 如果任务全部处理完了，再次检查后清除定时器
+                                        if (taskIdList.length === 0) {
+                                            clearInterval(intervalId);
+                                            value.clearWorkingPrinters(); // 清除工作打印机列表
+                                            console.log('所有任务处理完毕，已清除定时器。');
                                         }
-                                        console.log(`任务 ${taskId} 状态:`, data.data.status);
-                                    });
-
-                                    // 更新任务列表
-                                    taskIdList = taskIdList.filter(id => !toRemove.includes(id));
-
-                                    // 如果任务全部处理完了，再次检查后清除定时器
-                                    if (taskIdList.length === 0) {
-                                        clearInterval(intervalId);
-                                        value.clearWorkingPrinters(); // 清除工作打印机列表
-                                        console.log('所有任务处理完毕，已清除定时器。');
+                                    } catch (intervalError) {
+                                        console.error('轮询过程中发生意外错误:', intervalError);
+                                        // 即使出现意外错误，也不中断定时器，确保系统继续运行
                                     }
                                 }, 1000);
                             }
@@ -244,7 +337,7 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                         return (
                             <div className="pt-operation-handle">
                                 <div className="pt-operation-handle-select" tabIndex={1}>
-                                    <p className="pt-operation-handle-select-btn">Select Printer</p>
+                                    <p className="pt-operation-handle-select-btn">Select Priority</p>
                                     <svg xmlns="http://www.w3.org/2000/svg" className="pt-operation-handle-select-logo" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fff"><path d="M222-200 80-342l56-56 85 85 170-170 56 57-225 226Zm0-320L80-662l56-56 85 85 170-170 56 57-225 226Zm298 240v-80h360v80H520Zm0-320v-80h360v80H520Z" /></svg>
                                     <div className="pt-operation-handle-select-box">
                                         <p className="pt-operation-handle-select-box-item" onClick={() => { this.props.changeNumber(1); value.setCurrentPrinter(1) }}>1</p>
@@ -255,7 +348,7 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                 <div className="pt-operation-handle-form" onClick={value.toSelect}>
                                     <div className="pt-operation-handle-form-select">
                                         <p className="pt-operation-handle-form-select-group">
-                                            <span className="pt-operation-handle-form-select-p">Select File</span>
+                                            <span className="pt-operation-handle-form-select-p">Choose Code</span>
                                             <span className="pt-operation-handle-form-select-p"><svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="48px" fill="#fff"><path d="M319-250h322v-60H319v60Zm0-170h322v-60H319v60ZM220-80q-24 0-42-18t-18-42v-680q0-24 18-42t42-18h361l219 219v521q0 24-18 42t-42 18H220Zm331-554v-186H220v680h520v-494H551ZM220-820v186-186 680-680Z" /></svg></span>
                                         </p>
                                     </div>
@@ -309,9 +402,7 @@ class PrinterDetails extends React.Component<PrinterDetalsProps> {
                             }
                         })
                         let isWork = false;
-                        if (value.workingPrinters && value.workingPrinters.includes(this.props.id)) {
-                            isWork = true;
-                        }
+                        isWork = value.isPrinterWorking(this.props.id);
 
                         let successNumber = 0;
                         successNumber = value.getSuccessTasksNumber(this.props.id);
@@ -333,7 +424,7 @@ class PrinterDetails extends React.Component<PrinterDetalsProps> {
                                         </ul>
                                         <ul className="pt-detail-device-body-items">
                                             <li className="pt-detail-device-body-items-i">💬 设备运行状态：</li>
-                                            <li className="pt-detail-device-body-items-i">{isWork ? 'Running' : 'Pending'}</li>
+                                            <li className="pt-detail-device-body-items-i">{isWork ? 'Running' : 'Free'}</li>
                                         </ul>
                                         <ul className="pt-detail-device-body-items">
                                             <li className="pt-detail-device-body-items-i">📃 当前打印任务数：</li>

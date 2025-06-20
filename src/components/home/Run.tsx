@@ -2,6 +2,7 @@ import React from "react";
 import '../../assets/css/run.less'
 // import { taskContext } from "../../pages/HomePage";
 import { taskContext } from "../../context/taskContext";
+import axios from "axios";
 
 interface TaskItemType {
     printerId: number;
@@ -108,7 +109,7 @@ export class TaskCard extends React.Component<TaskCardProps, TaskCardState> {
 
 
 interface TasksItemsInterface {
-    tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string, index: number, removing: boolean, taskId?: number, state?: string }> | null;
+    tasks: Array<{ printerId: number; fileName: string; date: string; fileContent: string, teamName: string, index: number, removing: boolean, taskId?: number | null, state: string }> | null;
 }
 
 /**
@@ -189,7 +190,7 @@ interface OverCardProps {
     taskId?: number;
     transitionDelay: number;
     animate: boolean;
-    showCode: (fileName: string,fileContent: string, color: boolean, teamName: string, taskId?: number) => void;
+    showCode: (fileName: string, fileContent: string, color: boolean, teamName: string, taskId?: number) => void;
 }
 
 /**
@@ -222,7 +223,7 @@ class OverCard extends React.Component<OverCardProps> {
                     <svg xmlns="http://www.w3.org/2000/svg" className="run-card-content-logo" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h168q13-36 43.5-58t68.5-22q38 0 68.5 22t43.5 58h168q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm80-80h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm200-190q13 0 21.5-8.5T510-820q0-13-8.5-21.5T480-850q-13 0-21.5 8.5T450-820q0 13 8.5 21.5T480-790ZM200-200v-560 560Z" /></svg>
                     <div className="run-card-content-text">
                         <header className="run-card-content-text-header">{this.props.fileName}</header>
-                        <footer className="run-card-content-text-footer">{this.props.date.slice()}</footer>
+                        <footer className="run-card-content-text-footer">{this.props.date ? this.props.date.slice() : '无日期'}</footer>
                     </div>
                     <aside className="run-card-content-aside">
                         <p>Preview Code</p>
@@ -279,12 +280,26 @@ class OverItemds extends React.Component<any, { animate: boolean }> {
                         if (value.successTasks && value.successTasks.length > 0) {
                             disabled = false;
                         }
+                        const clearOverTasks = async () => {
+                            const successTaskIdList = value.successTasks?.map(task => task.taskId).filter(id => id !== undefined) as number[];
+                            if (successTaskIdList.length > 0) {
+                                try {
+                                    const res = await axios.post('/api/clear', { job_ids: successTaskIdList });
+                                    if (res.data.status === 'success') {
+                                        value.clearOverallTasks();
+                                    }
+                                }
+                                catch (err) {
+                                    console.error("Failed to clear tasks:", err);
+                                }
+                            }
+                        }
                         return (
                             <div className="run-task">
                                 <header className="run-task-header">All completed tasks</header>
                                 <div className="run-task-items">
                                     <div className="run-task-buttons">
-                                        <button onClick={value.clearOverallTasks} disabled={disabled} className="run-task-buttons-clear">
+                                        <button onClick={clearOverTasks} disabled={disabled} className="run-task-buttons-clear">
                                             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--text-color)"><path d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z" /></svg>
                                         </button>
                                         <button className="run-task-buttons-download" disabled={disabled} onClick={this.downLoadCodes}>
