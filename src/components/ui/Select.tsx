@@ -33,6 +33,7 @@ export default class Select extends React.Component<any, SelectState> {
             select.style.transform = "translateX(0)";
         }, 0);
 
+
     }
 
     componentWillUnmount(): void {

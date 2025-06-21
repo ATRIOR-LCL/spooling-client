@@ -158,7 +158,7 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                     }
                                     catch (error) {
                                         console.error(`打印任务 ${task.index} 请求失败:`, error);
-                                        // 直接返回失败任务对象，不要抛出错误
+                                        // 直接返回失败任务对象，不抛出错误
                                         return { 
                                             status: 'faild', 
                                             taskIndex: task.index, 
@@ -298,8 +298,6 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                                     value.setWaitingTask(taskIndex, data.job_id, 'faild');
                                                     toRemove.push(resultTaskId);
                                                 } else if (data.data.status === 'Completed') {
-                                                    console.log('Completed task data:', data.data);
-                                                    console.log('team_name from server:', data.data.team_name);
                                                     value.setWaitingTask(taskIndex, data.job_id, 'success');
                                                     value.setSuccessTasks({
                                                         fileContent: data.data.file_content,
@@ -311,9 +309,7 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                                     })
                                                     toRemove.push(resultTaskId);
                                                 }
-                                                console.log(`任务 ${resultTaskId} 状态:`, data.data.status);
                                             } catch (statusError) {
-                                                console.error(`处理任务 ${resultTaskId} 状态时出错:`, statusError);
                                                 // 即使状态处理出错，也不影响其他任务的处理
                                             }
                                         });
@@ -325,10 +321,8 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                         if (taskIdList.length === 0) {
                                             clearInterval(intervalId);
                                             value.clearWorkingPrinters(); // 清除工作打印机列表
-                                            console.log('所有任务处理完毕，已清除定时器。');
                                         }
                                     } catch (intervalError) {
-                                        console.error('轮询过程中发生意外错误:', intervalError);
                                         // 即使出现意外错误，也不中断定时器，确保系统继续运行
                                     }
                                 }, 1000);
@@ -337,7 +331,7 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                         return (
                             <div className="pt-operation-handle">
                                 <div className="pt-operation-handle-select" tabIndex={1}>
-                                    <p className="pt-operation-handle-select-btn">Select Priority</p>
+                                    <p className="pt-operation-handle-select-btn">Select Printer</p>
                                     <svg xmlns="http://www.w3.org/2000/svg" className="pt-operation-handle-select-logo" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fff"><path d="M222-200 80-342l56-56 85 85 170-170 56 57-225 226Zm0-320L80-662l56-56 85 85 170-170 56 57-225 226Zm298 240v-80h360v80H520Zm0-320v-80h360v80H520Z" /></svg>
                                     <div className="pt-operation-handle-select-box">
                                         <p className="pt-operation-handle-select-box-item" onClick={() => { this.props.changeNumber(1); value.setCurrentPrinter(1) }}>1</p>

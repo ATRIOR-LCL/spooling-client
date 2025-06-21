@@ -70,12 +70,12 @@ export default class Code extends React.Component<CodeProps> {
                                 {this.props.code}
                             </SyntaxHighlighter>
                         ) : (
+                            // 不传递 language 就不进行代码高亮
                             <SyntaxHighlighter style={solarizedlight} customStyle={{ backgroundColor: 'transparent', padding: '0.5rem', borderRadius: '0.5rem' }} showLineNumbers={true}>
                                 {this.props.code}
                             </SyntaxHighlighter>
                         )
                     }
-
                 </div>
             </div>
         )
