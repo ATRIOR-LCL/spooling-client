@@ -2,8 +2,9 @@ import React from "react";
 import '../../assets/css/printer.less'
 // import { taskContext } from "../../pages/HomePage";
 import { taskContext } from "../../context/taskContext";
-
 import axios from "axios";
+import confettiImg from '/images/confetti.png'
+import { Confetti } from "../ui/Confetti";
 
 interface PrinterCardState {
     printerName: string;
@@ -159,14 +160,14 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                     catch (error) {
                                         console.error(`打印任务 ${task.index} 请求失败:`, error);
                                         // 直接返回失败任务对象，不抛出错误
-                                        return { 
-                                            status: 'faild', 
-                                            taskIndex: task.index, 
-                                            job_id: null, 
+                                        return {
+                                            status: 'faild',
+                                            taskIndex: task.index,
+                                            job_id: null,
                                             data: {
-                                                problem_name: task.fileName, 
-                                                end_print_time: new Date().toISOString(), 
-                                                file_content: task.fileContent, 
+                                                problem_name: task.fileName,
+                                                end_print_time: new Date().toISOString(),
+                                                file_content: task.fileContent,
                                                 team_name: task.teamName,
                                                 priority: task.printerId
                                             }
@@ -195,13 +196,13 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                         console.warn('跳过空的任务数据');
                                         return;
                                     }
-                                    
+
                                     console.log(`处理任务 ${data.taskIndex}:`, {
                                         status: data.status,
                                         job_id: data.data?.job_id,
                                         hasData: !!data.data
                                     });
-                                    
+
                                     if (data.status === 'success' && data.data?.job_id != null) {
                                         // 成功的任务：更新 job_id 并添加到轮询映射中，保持 waiting 状态
                                         console.log(`任务 ${data.taskIndex} 请求成功，添加到轮询列表，job_id: ${data.data.job_id}`);
@@ -212,10 +213,10 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                         console.log(`任务 ${data.taskIndex} 请求失败，设置为 faild 状态`);
                                         value.setWaitingTask(data.taskIndex, null, 'faild');
                                         value.setFaildTasks(
-                                            data.data.priority, 
-                                            data.data.problem_name, 
-                                            data.data.end_print_time, 
-                                            data.data.file_content, 
+                                            data.data.priority,
+                                            data.data.problem_name,
+                                            data.data.end_print_time,
+                                            data.data.file_content,
                                             data.data.team_name
                                         );
                                     } else {
@@ -252,7 +253,7 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                                 console.warn(`跳过无效的任务ID: ${taskId}`);
                                                 throw new Error(`无效的任务ID: ${taskId}`);
                                             }
-                                            
+
                                             try {
                                                 const response = await axios.post(`/api/get_job_info`, { id: taskId });
                                                 return { data: response.data, taskId };
@@ -267,7 +268,7 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                         // 处理每个请求的结果，不管其他请求是否成功
                                         results.forEach((result, index) => {
                                             const taskId = taskIdList[index];
-                                            
+
                                             if (result.status === 'rejected') {
                                                 console.error(`任务 ${taskId} 轮询失败:`, result.reason);
                                                 // 对于轮询阶段的失败，我们可以选择重试或者暂时跳过
@@ -334,9 +335,9 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
                                     <p className="pt-operation-handle-select-btn">Select Printer</p>
                                     <svg xmlns="http://www.w3.org/2000/svg" className="pt-operation-handle-select-logo" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fff"><path d="M222-200 80-342l56-56 85 85 170-170 56 57-225 226Zm0-320L80-662l56-56 85 85 170-170 56 57-225 226Zm298 240v-80h360v80H520Zm0-320v-80h360v80H520Z" /></svg>
                                     <div className="pt-operation-handle-select-box">
-                                        <p className="pt-operation-handle-select-box-item" onClick={() => { this.props.changeNumber(1); value.setCurrentPrinter(1) }}>1</p>
-                                        <p className="pt-operation-handle-select-box-item" onClick={() => { this.props.changeNumber(2); value.setCurrentPrinter(2) }}>2</p>
-                                        <p className="pt-operation-handle-select-box-item" onClick={() => { this.props.changeNumber(3); value.setCurrentPrinter(3) }}>3</p>
+                                        <p className="pt-operation-handle-select-box-item" onClick={() => { this.props.changeNumber(1); value.setCurrentPrinter(1) }}>𝟭</p>
+                                        <p className="pt-operation-handle-select-box-item" onClick={() => { this.props.changeNumber(2); value.setCurrentPrinter(2) }}>𝟮</p>
+                                        <p className="pt-operation-handle-select-box-item" onClick={() => { this.props.changeNumber(3); value.setCurrentPrinter(3) }}>𝟯</p>
                                     </div>
                                 </div>
                                 <div className="pt-operation-handle-form" onClick={value.toSelect}>
@@ -381,8 +382,24 @@ class OperationHandle extends React.Component<PrinterHandleProps, PrinterHandleS
  * 
  */
 class PrinterDetails extends React.Component<PrinterDetalsProps> {
+    private lastGlobalState = {
+        hasSuccessTasks: false,
+        hasActiveTasks: true,
+        animationPlayed: false
+    }
+
     constructor(props: PrinterDetalsProps) {
         super(props);
+    }
+
+    private confettiAnim = () => {
+        const confettiImg = document.querySelector('.pt-detail-confetti-img') as HTMLImageElement;
+        if (confettiImg) {
+            confettiImg.style.animation = 'confettiAnim 1s ease forwards';
+            setTimeout(() => {
+                confettiImg.style.animation = '';
+            }, 1000);
+        }
     }
     render(): React.ReactNode {
         return (
@@ -403,13 +420,38 @@ class PrinterDetails extends React.Component<PrinterDetalsProps> {
                         let faildNumber = 0;
                         faildNumber = value.getFaildTasksNumber(this.props.id);
 
+                        let confettiPlay = false;
+
+                        // 检查全局状态：是否有成功任务且没有待处理任务
+                        const hasSuccessTasks = !!(value.successTasks && value.successTasks.length > 0);
+                        const hasActiveTasks = !!(value.tasks && value.tasks.length > 0);
+                        const hasFaildTasks = !!(value.tasks && value.successTasks && value.tasks.length - value.successTasks.length > 0)
+
+                        // 状态转换：从有任务变为没有任务，且有成功任务时触发动画
+                        const shouldTriggerAnimation = !hasFaildTasks && hasSuccessTasks && !hasActiveTasks &&
+                            (this.lastGlobalState.hasActiveTasks || !this.lastGlobalState.animationPlayed);
+
+                        if (shouldTriggerAnimation) {
+                            confettiPlay = true;
+                            this.confettiAnim();
+                            this.lastGlobalState.animationPlayed = true;
+                        }
+
+                        // 更新状态记录
+                        this.lastGlobalState.hasSuccessTasks = hasSuccessTasks;
+                        this.lastGlobalState.hasActiveTasks = hasActiveTasks;
+
+                        // 如果开始新的任务，重置动画播放标记
+                        if (hasActiveTasks && !this.lastGlobalState.hasActiveTasks) {
+                            this.lastGlobalState.animationPlayed = false;
+                        }
                         return (
                             <div className="pt-detail">
                                 <div className="pt-detail-device">
                                     <header className="pt-detail-device-name">
                                         <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" className="pt-detail-device-name-svg"><path d="M658-648v-132H302v132h-60v-192h476v192h-60Zm-518 60h680-680Zm599 95q12 0 21-9t9-21q0-12-9-21t-21-9q-12 0-21 9t-9 21q0 12 9 21t21 9Zm-81 313v-192H302v192h356Zm60 60H242v-176H80v-246q0-45.05 30.5-75.53Q141-648 186-648h588q45.05 0 75.53 30.47Q880-587.05 880-542v246H718v176Zm102-236v-186.21Q820-562 806.78-575q-13.23-13-32.78-13H186q-19.55 0-32.77 13.22Q140-561.55 140-542v186h102v-76h476v76h102Z" /></svg>
                                         <p>{this.props.id} 号打印机</p>
-                                        <div style={{ backgroundColor: tasksNumber ? 'red' : 'green' }} className="pt-detail-device-name-state"></div>
+                                        <div style={{ backgroundColor: isWork ? 'red' : 'green' }} className="pt-detail-device-name-state"></div>
                                     </header>
                                     <main className="pt-detail-device-body">
                                         <ul className="pt-detail-device-body-items">
@@ -433,7 +475,11 @@ class PrinterDetails extends React.Component<PrinterDetalsProps> {
                                             <li className="pt-detail-device-body-items-i">{faildNumber}</li>
                                         </ul>
                                     </main>
+                                    <div className="pt-detail-confetti">
+                                        <img src={confettiImg} className="pt-detail-confetti-img" alt="" />
+                                    </div>
                                 </div>
+                                <Confetti play={confettiPlay} x={1450} y={450} />
                             </div>
                         )
                     }

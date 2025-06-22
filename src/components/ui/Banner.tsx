@@ -29,7 +29,7 @@ class Banner extends React.Component {
         return (
             <header className="banner">
                 <div className="logo">
-                    <img src={icpcLogo} alt="ICPC Logo" className="icpc-logo" />
+                    <a href="https://icpc.global/" target="_blank"><img src={icpcLogo} alt="ICPC Logo" className="icpc-logo" /></a>
                 </div>
                 <p className="banner-content">
                     ACM International Collegiate Programming Contest Typing System 🎈

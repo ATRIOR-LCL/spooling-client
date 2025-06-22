@@ -25,8 +25,8 @@ interface TaskContextType {
     toSelect: () => void;
     closeSelect: () => void;
     setTeamName: (teamName: string) => void;
-    clearPendingTask: () => void; // 可选方法，用于清除待处理任务
-    setWaitingTask: (index: number, taskId: number | null, state: string) => void; // 可选方法，用于设置等待任务状态
+    clearPendingTask: () => void;
+    setWaitingTask: (index: number, taskId: number | null, state: string) => void;
 }
 export const taskContext = React.createContext<TaskContextType>({
     tasks: null,
